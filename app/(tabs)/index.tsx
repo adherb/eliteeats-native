@@ -117,11 +117,12 @@ export default function SearchScreen() {
         }}
       />
       <StatusBar style="light" />
-      {/* {toggleView ? (
+      {toggleView ? (
         <Text>List View</Text>
       ) : (
         // <ListView setToggleView={setToggleView} />
-        <Map setToggleView={setToggleView} markers={locations} />
+        <Text>Map View</Text>
+        // <Map setToggleView={setToggleView} markers={locations} />
       )}
       <View className="absolute top-14 left-0 right-0 flex-row mx-2">
         <Pressable
@@ -168,7 +169,7 @@ export default function SearchScreen() {
             size={20}
           />
         </Pressable>
-      </View> */}
+      </View>
       <StatusBar style="light" />
     </>
   );
