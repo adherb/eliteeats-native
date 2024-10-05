@@ -73,7 +73,7 @@ import React from "react";
 import { useState } from "react";
 import { ListView } from "../../../components/ListView";
 import { Stack, useRouter } from "expo-router";
-import { Map } from "../../../features/search/components/Map";
+import { Map } from "@/components/Map";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import clsx from "clsx";
@@ -121,8 +121,8 @@ export default function SearchScreen() {
         <Text>List View</Text>
       ) : (
         // <ListView setToggleView={setToggleView} />
-        <Text>Map View</Text>
-        // <Map setToggleView={setToggleView} markers={locations} />
+        // <Text>Map View</Text>
+        <Map setToggleView={setToggleView} markers={locations} />
       )}
       <View className="absolute top-14 left-0 right-0 flex-row mx-2">
         <Pressable

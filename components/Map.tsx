@@ -22,10 +22,10 @@ import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import { useRestaurantsQuery } from "../../../lib/api";
-import { isOpenNow, convert24HourTo12Hour } from "../../../lib/utils";
-import { useLocation } from "../../../LocationContext";
-import { useSession } from "../../../AuthContext";
+// import { useRestaurantsQuery } from "../../../lib/api";
+// import { isOpenNow, convert24HourTo12Hour } from "../../../lib/utils";
+// import { useLocation } from "../../../LocationContext";
+// import { useSession } from "../../../AuthContext";
 
 const timeZone = "Australia/Brisbane"; // TODO: make this dynamic
 
@@ -42,29 +42,29 @@ export function Map() {
 
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const { session } = useSession();
-  const userId = session?.user?.id;
+  // const { session } = useSession();
+  // const userId = session?.user?.id;
 
-  const { location, radius } = useLocation();
-  const coords = location ? location.coords : null;
+  // const { location, radius } = useLocation();
+  // const coords = location ? location.coords : null;
 
-  const { data, error, isLoading } = useRestaurantsQuery(
-    userId,
-    undefined,
-    coords,
-    radius // Use radius from the hook
-  );
+  // const { data, error, isLoading } = useRestaurantsQuery(
+  //   userId,
+  //   undefined,
+  //   coords,
+  //   radius // Use radius from the hook
+  // );
 
-  useEffect(() => {
-    if (location) {
-      setRegion({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      });
-    }
-  }, [location]);
+  // useEffect(() => {
+  //   if (location) {
+  //     setRegion({
+  //       latitude: location.coords.latitude,
+  //       longitude: location.coords.longitude,
+  //       latitudeDelta: 0.0922,
+  //       longitudeDelta: 0.0421,
+  //     });
+  //   }
+  // }, [location]);
 
   const animateToRegion = (region) => {
     if (mapRef.current) {
@@ -85,46 +85,46 @@ export function Map() {
   const SLIDER_WIDTH = Dimensions.get("window").width;
   const ITEM_WIDTH = Math.round(SLIDER_WIDTH * 0.7); // this determines how much of the next item is visible
 
-  const handleCarouselItemChange = (index) => {
-    let location = data.restaurants[index];
+  // const handleCarouselItemChange = (index) => {
+  //   let location = data.restaurants[index];
 
-    mapRef.current.animateToRegion({
-      latitude: location && Number(location?.latitude),
-      longitude: location && Number(location?.longitude),
-      latitudeDelta: 0.09,
-      longitudeDelta: 0.035,
-    });
+  //   mapRef.current.animateToRegion({
+  //     latitude: location && Number(location?.latitude),
+  //     longitude: location && Number(location?.longitude),
+  //     latitudeDelta: 0.09,
+  //     longitudeDelta: 0.035,
+  //   });
 
-    markerRefs.current[index]?.showCallout();
-  };
+  //   markerRefs.current[index]?.showCallout();
+  // };
 
   // if (isLoading) {
   //   return <Text>Loading...</Text>;
   // }
 
-  if (isLoading) {
-    return (
-      <View style={styles.container}>
-        <MapView
-          className="flex-1"
-          region={region}
-          key={`${region?.latitude}_${region?.longitude}`}
-          provider={
-            Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
-          }
-          style={{ flex: 1 }}
-          ref={mapRef}
-          scrollEnabled={true}
-          zoomEnabled={true}
-          rotateEnabled={true}
-          pitchEnabled={true}
-        />
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="grey" />
-        </View>
-      </View>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <View style={styles.container}>
+  //       <MapView
+  //         className="flex-1"
+  //         region={region}
+  //         key={`${region?.latitude}_${region?.longitude}`}
+  //         provider={
+  //           Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+  //         }
+  //         style={{ flex: 1 }}
+  //         ref={mapRef}
+  //         scrollEnabled={true}
+  //         zoomEnabled={true}
+  //         rotateEnabled={true}
+  //         pitchEnabled={true}
+  //       />
+  //       <View style={styles.loadingOverlay}>
+  //         <ActivityIndicator size="large" color="grey" />
+  //       </View>
+  //     </View>
+  //   );
+  // }
 
   // This is the carousel restaurant card
   const renderCarouselItem = ({ item }) => (
@@ -137,7 +137,8 @@ export function Map() {
       }}
       className="bg-white flex-1 h-52 rounded-xl mb-2 w-full"
     >
-      <Pressable onPress={() => router.push(`/restaurant/${item.id}`)}>
+      {/* <Pressable onPress={() => router.push(`/restaurant/${item.id}`)}> */}
+      <Pressable onPress={() => router.push(`/`)}>
         <View className="flex-row justify-between mb-2 rounded-xl w-full">
           {/* <View className="h-24"> */}
           <View className="w-full flex-1 rounded-xl">
@@ -153,8 +154,8 @@ export function Map() {
                 // source={{
                 //   uri: image,
                 // }}
-                source={item.featured_image}
-                // source="https://onenewchange.com/sites/one_new_change/files/styles/shop_gallery_small/public/images/gallery/gallery_nandos_new_cutlery_2.jpg?itok=ENpDDNnK"
+                // source={item.featured_image}
+                source="https://onenewchange.com/sites/one_new_change/files/styles/shop_gallery_small/public/images/gallery/gallery_nandos_new_cutlery_2.jpg?itok=ENpDDNnK"
                 placeholder={blurhash}
                 // contentFit="cover"
                 transition={500}
@@ -162,7 +163,8 @@ export function Map() {
             </View>
             <View className="px-2 mt-1">
               <Text className="text-base font-semibold text-gray-900">
-                {item.name}
+                {/* {item.name} */}
+                Name
               </Text>
             </View>
             {/* </View> */}
@@ -173,7 +175,8 @@ export function Map() {
                 </View>
                 <View className="ml-1 text-gray-400">
                   <Text className="text-gray-900 text-sm font-bold">
-                    {item.distance.toFixed(1)} km
+                    {/* {item.distance.toFixed(1)} km */}
+                    10 km
                   </Text>
                 </View>
               </View>
@@ -181,14 +184,16 @@ export function Map() {
               <View className="flex-row items-center">
                 <View className="ml-1">
                   <Text className="text-gray-700 text-sm">
-                    {item.price_rating}
+                    {/* {item.price_rating} */}
+                    price
                   </Text>
                 </View>
               </View>
               <Text className="mx-1 text-gray-500"> {"\u2022"}</Text>
               <View className="ml-1">
                 <Text className="text-gray-700 text-sm">
-                  {item.average_prep_time} mins
+                  {/* {item.average_prep_time} mins */}
+                  10 mins
                 </Text>
               </View>
             </View>
@@ -199,7 +204,10 @@ export function Map() {
                   <Ionicons name="time-outline" size={16} color="#4b5563" />
                 </View>
                 <View className="ml-1">
-                  {isOpenNow(item.opens_at, item.closes_at, timeZone) ? (
+                  <Text className="text-green-600 font-semibold text-sm">
+                    Open
+                  </Text>
+                  {/* {isOpenNow(item.opens_at, item.closes_at, timeZone) ? (
                     <Text className="text-green-600 font-semibold text-sm">
                       Open
                     </Text>
@@ -207,7 +215,7 @@ export function Map() {
                     <Text className="text-red-600 font-semibold text-sm">
                       Closed
                     </Text>
-                  )}
+                  )} */}
                 </View>
               </View>
               <Text className="mx-1 text-gray-500"> {"\u2022"}</Text>
@@ -217,7 +225,8 @@ export function Map() {
               </View> */}
                 <View className="ml-1">
                   <Text className="text-gray-700 text-sm">
-                    Closes at {convert24HourTo12Hour(item.closes_at)}
+                    {/* Closes at {convert24HourTo12Hour(item.closes_at)} */}
+                    Closes at
                   </Text>
                 </View>
               </View>
@@ -248,7 +257,7 @@ export function Map() {
           rotateEnabled={true}
           pitchEnabled={true}
         >
-          {data.restaurants.map((location, index) => (
+          {/* {data.restaurants.map((location, index) => (
             <Marker
               key={location.id}
               coordinate={{
@@ -267,7 +276,7 @@ export function Map() {
               />
               <Callout tooltip={true} />
             </Marker>
-          ))}
+          ))} */}
         </MapView>
 
         <View
@@ -276,7 +285,7 @@ export function Map() {
         ></View>
 
         {/* <View className="absolute top-0 left-0 right-0 bottom-0 bg-black opacity-10"></View> */}
-        <Carousel
+        {/* <Carousel
           ref={carouselRef}
           data={data.restaurants}
           renderItem={renderCarouselItem}
@@ -285,7 +294,7 @@ export function Map() {
           onSnapToItem={handleCarouselItemChange}
           containerCustomStyle={{ position: "absolute", bottom: 0 }}
           inactiveSlideShift={0}
-        />
+        /> */}
         <SafeAreaView
           style={{ position: "absolute", top: 0, left: 0, right: 0 }}
         >
