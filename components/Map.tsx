@@ -1,6 +1,5 @@
 import React from "react";
 import { useState, useRef, useEffect } from "react";
-import Carousel from "react-native-snap-carousel";
 import MapView, {
   Marker,
   Callout,
@@ -11,31 +10,68 @@ import {
   View,
   Text,
   StyleSheet,
-  Pressable,
   Dimensions,
-  ActivityIndicator,
   Platform,
+  ScrollView,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { Link, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-// import { useRestaurantsQuery } from "../../../lib/api";
-// import { isOpenNow, convert24HourTo12Hour } from "../../../lib/utils";
-// import { useLocation } from "../../../LocationContext";
-// import { useSession } from "../../../AuthContext";
+import BottomSheet from "@gorhom/bottom-sheet";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const timeZone = "Australia/Brisbane"; // TODO: make this dynamic
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
 
+// Add this near the top of your file, outside of the Map function
+const sampleRestaurants = [
+  {
+    id: "1",
+    name: "Joe's Pizza",
+    latitude: -33.8688,
+    longitude: 151.2093,
+    image: "https://example.com/joes-pizza.jpg",
+    distance: 1.2,
+    price_rating: "$$",
+    average_prep_time: 20,
+    opens_at: "11:00",
+    closes_at: "22:00",
+  },
+  {
+    id: "2",
+    name: "Sushi Paradise",
+    latitude: -33.8701,
+    longitude: 151.2055,
+    image: "https://example.com/sushi-paradise.jpg",
+    distance: 0.8,
+    price_rating: "$$$",
+    average_prep_time: 25,
+    opens_at: "12:00",
+    closes_at: "21:30",
+  },
+  {
+    id: "3",
+    name: "Burger Bliss",
+    latitude: -33.8675,
+    longitude: 151.207,
+    image: "https://example.com/burger-bliss.jpg",
+    distance: 1.5,
+    price_rating: "$",
+    average_prep_time: 15,
+    opens_at: "10:00",
+    closes_at: "23:00",
+  },
+];
+
 export function Map() {
-  const mapRef = useRef(null);
-  const carouselRef = useRef(null);
+  const mapRef = useRef<MapView | null>(null);
+  // const carouselRef = useRef<any>(null);
   const markerRefs = useRef([]);
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Add default coordinates for Sydney
   const [region, setRegion] = useState({
@@ -47,31 +83,10 @@ export function Map() {
 
   const [selectedLocation, setSelectedLocation] = useState(null);
 
+  const snapPoints = React.useMemo(() => ["25%", "50%", "75%"], []);
+
   const router = useRouter();
   const colorScheme = useColorScheme();
-  // const { session } = useSession();
-  // const userId = session?.user?.id;
-
-  // const { location, radius } = useLocation();
-  // const coords = location ? location.coords : null;
-
-  // const { data, error, isLoading } = useRestaurantsQuery(
-  //   userId,
-  //   undefined,
-  //   coords,
-  //   radius // Use radius from the hook
-  // );
-
-  // useEffect(() => {
-  //   if (location) {
-  //     setRegion({
-  //       latitude: location.coords.latitude,
-  //       longitude: location.coords.longitude,
-  //       latitudeDelta: 0.0922,
-  //       longitudeDelta: 0.0421,
-  //     });
-  //   }
-  // }, [location]);
   useEffect(() => {
     // If location is not available, use the default Sydney coordinates
     // if (!location) {
@@ -97,229 +112,163 @@ export function Map() {
   };
 
   const handleMarkerPress = (index) => {
-    carouselRef.current.snapToItem(index);
+    bottomSheetRef.current?.snapToIndex(1);
+    setSelectedLocation(sampleRestaurants[index]);
   };
 
-  const SLIDER_WIDTH = Dimensions.get("window").width;
-  const ITEM_WIDTH = Math.round(SLIDER_WIDTH * 0.7); // this determines how much of the next item is visible
+  const width = Dimensions.get("window").width;
+  const ITEM_WIDTH = Math.round(width * 0.7); // Width of the main item
+  const ITEM_HEIGHT = 160;
+  const SPACING = 10; // Spacing between items
 
-  // const handleCarouselItemChange = (index) => {
-  //   let location = data.restaurants[index];
+  const handleCarouselItemChange = (index) => {
+    let location = sampleRestaurants[index];
 
-  //   mapRef.current.animateToRegion({
-  //     latitude: location && Number(location?.latitude),
-  //     longitude: location && Number(location?.longitude),
-  //     latitudeDelta: 0.09,
-  //     longitudeDelta: 0.035,
-  //   });
+    mapRef.current.animateToRegion({
+      latitude: location && Number(location?.latitude),
+      longitude: location && Number(location?.longitude),
+      latitudeDelta: 0.09,
+      longitudeDelta: 0.035,
+    });
 
-  //   markerRefs.current[index]?.showCallout();
-  // };
+    markerRefs.current[index]?.showCallout();
+  };
 
-  // if (isLoading) {
-  //   return <Text>Loading...</Text>;
-  // }
-
-  // if (isLoading) {
-  //   return (
-  //     <View style={styles.container}>
-  //       <MapView
-  //         className="flex-1"
-  //         region={region}
-  //         key={`${region?.latitude}_${region?.longitude}`}
-  //         provider={
-  //           Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
-  //         }
-  //         style={{ flex: 1 }}
-  //         ref={mapRef}
-  //         scrollEnabled={true}
-  //         zoomEnabled={true}
-  //         rotateEnabled={true}
-  //         pitchEnabled={true}
-  //       />
-  //       <View style={styles.loadingOverlay}>
-  //         <ActivityIndicator size="large" color="grey" />
-  //       </View>
-  //     </View>
-  //   );
-  // }
-
-  // This is the carousel restaurant card
-  const renderCarouselItem = ({ item }) => (
-    <View
-      style={{
-        // backgroundColor: "floralwhite",
-        // height: 200,
-        width: ITEM_WIDTH,
-        // padding: 10,
-      }}
-      className="bg-white flex-1 h-52 rounded-xl mb-2 w-full"
-    >
-      {/* <Pressable onPress={() => router.push(`/restaurant/${item.id}`)}> */}
-      <Pressable onPress={() => router.push(`/`)}>
-        <View className="flex-row justify-between mb-2 rounded-xl w-full">
-          {/* <View className="h-24"> */}
-          <View className="w-full flex-1 rounded-xl">
-            <View className="relative h-32 w-full rounded-xl">
-              <View className="z-10 absolute top-2 left-2 items-center rounded-full bg-[#FF3C41] px-2 py-1 text-sm font-medium text-gray-600">
-                <Text className="text-sm font-medium text-white">
-                  Up to 20% discount
-                </Text>
-              </View>
-              <Image
-                className="rounded-t-xl absolute h-32 w-full transform bg-cover bg-center transition-all duration-500 ease-in-out hover:scale-110"
-                //   alt={name}
-                // source={{
-                //   uri: image,
-                // }}
-                // source={item.featured_image}
-                source="https://onenewchange.com/sites/one_new_change/files/styles/shop_gallery_small/public/images/gallery/gallery_nandos_new_cutlery_2.jpg?itok=ENpDDNnK"
-                placeholder={blurhash}
-                // contentFit="cover"
-                transition={500}
-              />
-            </View>
-            <View className="px-2 mt-1">
-              <Text className="text-base font-semibold text-gray-900">
-                {/* {item.name} */}
-                Name
-              </Text>
-            </View>
-            {/* </View> */}
-            <View className="flex-row px-2 mt-1">
-              <View className="flex-row items-center">
-                <View className="">
-                  <Ionicons name="car" size={16} color="#4b5563" />
-                </View>
-                <View className="ml-1 text-gray-400">
-                  <Text className="text-gray-900 text-sm font-bold">
-                    {/* {item.distance.toFixed(1)} km */}
-                    10 km
-                  </Text>
-                </View>
-              </View>
-              <Text className="mx-1 text-gray-500"> {"\u2022"}</Text>
-              <View className="flex-row items-center">
-                <View className="ml-1">
-                  <Text className="text-gray-700 text-sm">
-                    {/* {item.price_rating} */}
-                    price
-                  </Text>
-                </View>
-              </View>
-              <Text className="mx-1 text-gray-500"> {"\u2022"}</Text>
-              <View className="ml-1">
-                <Text className="text-gray-700 text-sm">
-                  {/* {item.average_prep_time} mins */}
-                  10 mins
-                </Text>
-              </View>
-            </View>
-
-            <View className="flex-row px-2 mt-1">
-              <View className="flex-row items-center">
-                <View className="">
-                  <Ionicons name="time-outline" size={16} color="#4b5563" />
-                </View>
-                <View className="ml-1">
-                  <Text className="text-green-600 font-semibold text-sm">
-                    Open
-                  </Text>
-                  {/* {isOpenNow(item.opens_at, item.closes_at, timeZone) ? (
-                    <Text className="text-green-600 font-semibold text-sm">
-                      Open
-                    </Text>
-                  ) : (
-                    <Text className="text-red-600 font-semibold text-sm">
-                      Closed
-                    </Text>
-                  )} */}
-                </View>
-              </View>
-              <Text className="mx-1 text-gray-500"> {"\u2022"}</Text>
-              <View className="flex-row items-center">
-                {/* <View className="">
-                <Ionicons name="time-outline" size={16} color="#4b5563" />
-              </View> */}
-                <View className="ml-1">
-                  <Text className="text-gray-700 text-sm">
-                    {/* Closes at {convert24HourTo12Hour(item.closes_at)} */}
-                    Closes at
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        </View>
-      </Pressable>
+  // This is the bottom sheet restaurant card
+  const renderRestaurantCard = (item) => (
+    <View style={styles.restaurantCard}>
+      <Image
+        source="https://onenewchange.com/sites/one_new_change/files/styles/shop_gallery_small/public/images/gallery/gallery_nandos_new_cutlery_2.jpg?itok=ENpDDNnK"
+        style={styles.restaurantImage}
+      />
+      <View style={styles.restaurantInfo}>
+        <Text style={styles.restaurantName}>{item.name}</Text>
+        <Text style={styles.restaurantDetails}>
+          {item.price_rating} • {item.distance} km • {item.average_prep_time}{" "}
+          min
+        </Text>
+        <Text style={styles.restaurantHours}>
+          Opens: {item.opens_at} • Closes: {item.closes_at}
+        </Text>
+      </View>
     </View>
   );
 
-  return (
-    <>
-      {/* <Text>{JSON.stringify(data)}</Text> */}
-      <StatusBar style="dark" />
-      <View style={styles.container}>
-        <MapView
-          className="flex-1"
-          region={region}
-          // customMapStyle={isDarkMode ? darkMapStyle : []}
-          key={`${region?.latitude}_${region?.longitude}`}
-          provider={
-            Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
-          }
-          style={{ flex: 1 }}
-          ref={mapRef}
-          scrollEnabled={true}
-          zoomEnabled={true}
-          rotateEnabled={true}
-          pitchEnabled={true}
-        >
-          {/* {data.restaurants.map((location, index) => (
-            <Marker
-              key={location.id}
-              coordinate={{
-                latitude: location && Number(location?.latitude),
-                longitude: location && Number(location?.longitude),
-              }}
-              title={location.name}
-              style={{ width: 50, height: 50 }}
-              ref={(ref) => (data.restaurants[index].ref = ref)}
-              onPress={() => handleMarkerPress(index)}
-            >
-              <Image
-                source={require("../../../assets/images/custom-map-pin.png")}
-                className="w-auto h-10"
-                onPress={() => handleMarkerPress(index)}
-              />
-              <Callout tooltip={true} />
-            </Marker>
-          ))} */}
-        </MapView>
-
-        <View
-          className="absolute top-0 left-0 right-0 bottom-0 bg-black opacity-10"
-          pointerEvents="none"
-        ></View>
-
-        {/* <View className="absolute top-0 left-0 right-0 bottom-0 bg-black opacity-10"></View> */}
-        {/* <Carousel
-          ref={carouselRef}
-          data={data.restaurants}
-          renderItem={renderCarouselItem}
-          sliderWidth={SLIDER_WIDTH}
-          itemWidth={ITEM_WIDTH}
-          onSnapToItem={handleCarouselItemChange}
-          containerCustomStyle={{ position: "absolute", bottom: 0 }}
-          inactiveSlideShift={0}
-        /> */}
-        <SafeAreaView
-          style={{ position: "absolute", top: 0, left: 0, right: 0 }}
-        >
-          <View style={{ backgroundColor: "" }}></View>
-        </SafeAreaView>
+  /* Commented out carousel item renderer
+  const renderCarouselItem = ({ item }) => (
+    <View
+      style={{
+        width: ITEM_WIDTH,
+        height: ITEM_HEIGHT,
+        marginHorizontal: SPACING / 2,
+        borderRadius: 15,
+        overflow: "hidden",
+      }}
+      className="bg-white mb-2"
+    >
+      <Image
+        source="https://onenewchange.com/sites/one_new_change/files/styles/shop_gallery_small/public/images/gallery/gallery_nandos_new_cutlery_2.jpg?itok=ENpDDNnK"
+        style={{
+          width: "100%",
+          height: "100%",
+          resizeMode: "cover",
+        }}
+      />
+      <View
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: "rgba(0,0,0,0.5)",
+          padding: 10,
+        }}
+      >
+        <Text className="text-white font-bold">{item.name}</Text>
+        <Text className="text-white">
+          {item.rating} Stars, {item.review_count} Reviews
+        </Text>
       </View>
-    </>
+    </View>
+  );
+  */
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <View style={styles.container}>
+          <MapView
+            className="flex-1"
+            region={region}
+            key={`${region?.latitude}_${region?.longitude}`}
+            provider={
+              Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+            }
+            style={styles.map}
+            ref={mapRef}
+            scrollEnabled={true}
+            zoomEnabled={true}
+            rotateEnabled={true}
+            pitchEnabled={true}
+          >
+            {sampleRestaurants.map((location, index) => (
+              <Marker
+                key={location.id}
+                coordinate={{
+                  latitude: Number(location.latitude),
+                  longitude: Number(location.longitude),
+                }}
+                title={location.name}
+                ref={(ref) => (markerRefs.current[index] = ref)}
+                onPress={() => handleMarkerPress(index)}
+              >
+                <Callout tooltip={true} />
+              </Marker>
+            ))}
+          </MapView>
+
+          <View style={styles.overlay} pointerEvents="none" />
+
+          {/* Commented out Carousel component
+          <Carousel
+            loop
+            width={ITEM_WIDTH + SPACING}
+            height={ITEM_HEIGHT}
+            autoPlay={false}
+            data={sampleRestaurants}
+            scrollAnimationDuration={1000}
+            onSnapToItem={handleCarouselItemChange}
+            renderItem={renderCarouselItem}
+            style={styles.carouselContainer}
+            mode="parallax"
+            modeConfig={{
+              parallaxScrollingScale: 0.9,
+              parallaxScrollingOffset: 50,
+            }}
+            snapEnabled={true}
+            defaultIndex={0}
+            panGestureHandlerProps={{
+              activeOffsetX: [-10, 10],
+            }}
+          />
+          */}
+
+          <BottomSheet
+            ref={bottomSheetRef}
+            index={-1}
+            snapPoints={snapPoints}
+            enablePanDownToClose={true}
+          >
+            <ScrollView contentContainerStyle={styles.bottomSheetContent}>
+              {sampleRestaurants.map((restaurant) =>
+                renderRestaurantCard(restaurant)
+              )}
+            </ScrollView>
+          </BottomSheet>
+        </View>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -327,15 +276,75 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  map: {
+    flex: 1,
+    ...StyleSheet.absoluteFillObject,
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+  },
+  bottomSheetContent: {
+    padding: 16,
+  },
+  restaurantCard: {
+    flexDirection: "row",
+    marginBottom: 16,
+    backgroundColor: "white",
+    borderRadius: 8,
+    overflow: "hidden",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  restaurantImage: {
+    width: 100,
+    height: 100,
+  },
+  restaurantInfo: {
+    flex: 1,
+    padding: 12,
+  },
+  restaurantName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  restaurantDetails: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 4,
+  },
+  restaurantHours: {
+    fontSize: 14,
+    color: "#666",
+  },
+
+  // Existing carousel styles (kept for future reference)
+  carouselContainer: {
+    width: "100%",
+    position: "absolute",
+    bottom: 20,
+    left: 0,
+    right: 0,
+  },
+  safeAreaView: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+  },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.7)", // Optional: Add a semi-transparent background
-  },
-  map: {
-    // width: "100%",
-    // height: "100%",
   },
   calloutTitle: {
     fontWeight: "bold",
@@ -445,9 +454,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: "center",
   },
-  // container: {
-  //   flex: 1,
-  // },
   image: {
     flex: 1,
     justifyContent: "center",
