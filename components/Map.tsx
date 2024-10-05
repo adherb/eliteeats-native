@@ -34,7 +34,8 @@ const sampleRestaurants = [
     name: "Joe's Pizza",
     latitude: -33.8688,
     longitude: 151.2093,
-    image: "https://example.com/joes-pizza.jpg",
+    image:
+      "https://cdn.concreteplayground.com/content/uploads/2023/09/Nobu-Sydney-_-Haku-_-Jude-Cohen-_-2023-7-1920x1440.jpg",
     distance: 1.2,
     price_rating: "$$",
     average_prep_time: 20,
@@ -46,7 +47,8 @@ const sampleRestaurants = [
     name: "Sushi Paradise",
     latitude: -33.8701,
     longitude: 151.2055,
-    image: "https://example.com/sushi-paradise.jpg",
+    image:
+      "https://cdn.concreteplayground.com/content/uploads/2023/09/Nobu-Sydney-_-Haku-_-Jude-Cohen-_-2023-7-1920x1440.jpg",
     distance: 0.8,
     price_rating: "$$$",
     average_prep_time: 25,
@@ -58,7 +60,8 @@ const sampleRestaurants = [
     name: "Burger Bliss",
     latitude: -33.8675,
     longitude: 151.207,
-    image: "https://example.com/burger-bliss.jpg",
+    image:
+      "https://cdn.concreteplayground.com/content/uploads/2023/09/Nobu-Sydney-_-Haku-_-Jude-Cohen-_-2023-7-1920x1440.jpg",
     distance: 1.5,
     price_rating: "$",
     average_prep_time: 15,
@@ -141,28 +144,39 @@ export function Map() {
 
   // Updated renderRestaurantCard function
   const renderRestaurantCard = (item) => (
-    <View className="bg-white rounded-lg">
-      <Text className="text-2xl font-bold pb-1">{item.name}</Text>
-      {/* <View className=""> */}
+    <View className="bg-white rounded-lg overflow-hidden mb-5 shadow-md">
       <Image
-        source="https://onenewchange.com/sites/one_new_change/files/styles/shop_gallery_small/public/images/gallery/gallery_nandos_new_cutlery_2.jpg?itok=ENpDDNnK"
-        className="w-full h-48 object-cover"
+        source={{ uri: item.image }}
         style={{
           width: "100%",
-          height: "100%",
-          resizeMode: "cover",
-          borderRadius: 9,
+          height: 192, // 48 * 4 = 192 (assuming 1 rem = 4px)
+          objectFit: "cover",
         }}
+        placeholder={blurhash}
+        contentFit="cover"
+        transition={1000}
       />
-      {/* </View> */}
       <View className="p-4">
-        <Text className="text-sm text-gray-600 mb-2">
-          {item.price_rating} • {item.distance} km • {item.average_prep_time}{" "}
-          min
+        <Text className="text-2xl font-bold mb-2">{item.name}</Text>
+        <View className="flex-row items-center mb-2">
+          <Text className="text-yellow-500 font-bold mr-1">★ 4.5</Text>
+          <Text className="text-gray-600 text-sm">(500+ reviews)</Text>
+        </View>
+        <Text className="text-gray-700 mb-2">
+          {item.price_rating} • {item.distance.toFixed(1)} km away •{" "}
+          {item.average_prep_time} min prep time
         </Text>
-        <Text className="text-sm text-gray-600">
-          Opens: {item.opens_at} • Closes: {item.closes_at}
+        <Text className="text-gray-600 mb-3">
+          Open: {item.opens_at} - {item.closes_at}
         </Text>
+        <View className="flex-row flex-wrap">
+          <View className="bg-gray-200 rounded-full px-3 py-1 mr-2 mb-2">
+            <Text className="text-sm text-gray-700">Italian</Text>
+          </View>
+          <View className="bg-gray-200 rounded-full px-3 py-1 mr-2 mb-2">
+            <Text className="text-sm text-gray-700">Pizza</Text>
+          </View>
+        </View>
       </View>
     </View>
   );
