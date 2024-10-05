@@ -82,6 +82,7 @@ export function Map() {
   });
 
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 
   const snapPoints = React.useMemo(() => ["25%", "50%", "75%"], []);
 
@@ -113,7 +114,7 @@ export function Map() {
 
   const handleMarkerPress = (index) => {
     bottomSheetRef.current?.snapToIndex(1);
-    setSelectedLocation(sampleRestaurants[index]);
+    setSelectedRestaurant(sampleRestaurants[index]);
   };
 
   const width = Dimensions.get("window").width;
@@ -134,15 +135,15 @@ export function Map() {
     markerRefs.current[index]?.showCallout();
   };
 
-  // This is the bottom sheet restaurant card
+  // Updated renderRestaurantCard function
   const renderRestaurantCard = (item) => (
     <View style={styles.restaurantCard}>
+      <Text style={styles.restaurantName}>{item.name}</Text>
       <Image
         source="https://onenewchange.com/sites/one_new_change/files/styles/shop_gallery_small/public/images/gallery/gallery_nandos_new_cutlery_2.jpg?itok=ENpDDNnK"
         style={styles.restaurantImage}
       />
       <View style={styles.restaurantInfo}>
-        <Text style={styles.restaurantName}>{item.name}</Text>
         <Text style={styles.restaurantDetails}>
           {item.price_rating} • {item.distance} km • {item.average_prep_time}{" "}
           min
@@ -261,9 +262,7 @@ export function Map() {
             enablePanDownToClose={true}
           >
             <ScrollView contentContainerStyle={styles.bottomSheetContent}>
-              {sampleRestaurants.map((restaurant) =>
-                renderRestaurantCard(restaurant)
-              )}
+              {selectedRestaurant && renderRestaurantCard(selectedRestaurant)}
             </ScrollView>
           </BottomSheet>
         </View>
@@ -292,8 +291,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   restaurantCard: {
-    flexDirection: "row",
-    marginBottom: 16,
     backgroundColor: "white",
     borderRadius: 8,
     overflow: "hidden",
@@ -303,23 +300,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  restaurantName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    padding: 16,
+    // Removed backgroundColor
+  },
   restaurantImage: {
-    width: 100,
-    height: 100,
+    width: "100%",
+    height: 200, // Adjust this value as needed
+    resizeMode: "cover",
   },
   restaurantInfo: {
-    flex: 1,
-    padding: 12,
-  },
-  restaurantName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 4,
+    padding: 16,
   },
   restaurantDetails: {
     fontSize: 14,
     color: "#666",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   restaurantHours: {
     fontSize: 14,
