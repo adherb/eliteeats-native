@@ -71,7 +71,7 @@
 
 import React from "react";
 import { useState } from "react";
-import { ListView } from "../../../components/ListView";
+// import { ListView } from "../../../components/ListView";
 import { Stack, useRouter } from "expo-router";
 import { Map } from "@/components/Map";
 import { View, Text, Pressable } from "react-native";
@@ -147,7 +147,7 @@ export default function SearchScreen() {
                   className="px-2"
                 />
                 <Text className="flex-1 ml-2 py-2 text-gray-600">
-                  Search Harty
+                  Search Restaurants
                 </Text>
               </View>
             </View>

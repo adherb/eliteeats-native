@@ -37,7 +37,14 @@ export function Map() {
   const carouselRef = useRef(null);
   const markerRefs = useRef([]);
 
-  const [region, setRegion] = useState(null); // Initialize region as null
+  // Add default coordinates for Sydney
+  const [region, setRegion] = useState({
+    latitude: -33.8688,
+    longitude: 151.2093,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  });
+
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   const router = useRouter();
@@ -65,6 +72,17 @@ export function Map() {
   //     });
   //   }
   // }, [location]);
+  useEffect(() => {
+    // If location is not available, use the default Sydney coordinates
+    // if (!location) {
+    setRegion({
+      latitude: -33.8688,
+      longitude: 151.2093,
+      latitudeDelta: 0.0922,
+      longitudeDelta: 0.0421,
+    });
+    // }
+  }, []);
 
   const animateToRegion = (region) => {
     if (mapRef.current) {
