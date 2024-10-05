@@ -124,7 +124,7 @@ export default function SearchScreen() {
         // <Text>Map View</Text>
         <Map setToggleView={setToggleView} markers={locations} />
       )}
-      <View className="absolute top-14 left-0 right-0 flex-row mx-2">
+      <View className="absolute top-20 left-0 right-0 flex-row mx-2">
         <Pressable
           className="flex-1"
           onPress={() => router.push("/search-location")}
@@ -133,7 +133,7 @@ export default function SearchScreen() {
             <View>
               <View
                 className={clsx(
-                  "px-4 w-full rounded-full opacity-100 flex flex-row items-center justify-center h-12", // Added h-12 for consistent height
+                  "px-4 w-full rounded-full opacity-100 flex flex-row items-center justify-center h-14", // Added h-12 for consistent height
                   {
                     "bg-gray-100": toggleView,
                     "bg-white": !toggleView,
@@ -153,7 +153,7 @@ export default function SearchScreen() {
             </View>
           </View>
         </Pressable>
-        <Pressable
+        {/* <Pressable
           onPress={() => setToggleView(!toggleView)}
           className={clsx(
             "rounded-full p-2.5 ml-1 flex items-center justify-center h-12 w-12",
@@ -168,7 +168,7 @@ export default function SearchScreen() {
             color="black"
             size={20}
           />
-        </Pressable>
+        </Pressable> */}
       </View>
       <StatusBar style="light" />
     </>
