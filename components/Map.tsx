@@ -85,7 +85,8 @@ export function Map() {
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 
   // Update snap points to include a 75% option
-  const snapPoints = React.useMemo(() => ["25%", "50%", "75%"], []);
+  // const snapPoints = React.useMemo(() => ["25%", "50%", "75%"], []);
+  const snapPoints = React.useMemo(() => ["75%"], []);
 
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -115,27 +116,27 @@ export function Map() {
 
   // Update handleMarkerPress function to open to 75% height
   const handleMarkerPress = (index) => {
-    bottomSheetRef.current?.snapToIndex(2); // Use index 2 for the 75% height
+    bottomSheetRef.current?.snapToIndex(0); // Use index 0 for the 75% height
     setSelectedRestaurant(sampleRestaurants[index]);
   };
 
   const width = Dimensions.get("window").width;
-  const ITEM_WIDTH = Math.round(width * 0.7); // Width of the main item
-  const ITEM_HEIGHT = 160;
-  const SPACING = 10; // Spacing between items
+  // const ITEM_WIDTH = Math.round(width * 0.7); // Width of the main item
+  // const ITEM_HEIGHT = 160;
+  // const SPACING = 10; // Spacing between items
 
-  const handleCarouselItemChange = (index) => {
-    let location = sampleRestaurants[index];
+  // const handleCarouselItemChange = (index) => {
+  //   let location = sampleRestaurants[index];
 
-    mapRef.current.animateToRegion({
-      latitude: location && Number(location?.latitude),
-      longitude: location && Number(location?.longitude),
-      latitudeDelta: 0.09,
-      longitudeDelta: 0.035,
-    });
+  //   mapRef.current.animateToRegion({
+  //     latitude: location && Number(location?.latitude),
+  //     longitude: location && Number(location?.longitude),
+  //     latitudeDelta: 0.09,
+  //     longitudeDelta: 0.035,
+  //   });
 
-    markerRefs.current[index]?.showCallout();
-  };
+  //   markerRefs.current[index]?.showCallout();
+  // };
 
   // Updated renderRestaurantCard function
   const renderRestaurantCard = (item) => (
