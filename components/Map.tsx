@@ -84,6 +84,7 @@ export function Map() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 
+  // Update snap points to include a 75% option
   const snapPoints = React.useMemo(() => ["25%", "50%", "75%"], []);
 
   const router = useRouter();
@@ -112,8 +113,9 @@ export function Map() {
     }
   };
 
+  // Update handleMarkerPress function to open to 75% height
   const handleMarkerPress = (index) => {
-    bottomSheetRef.current?.snapToIndex(1);
+    bottomSheetRef.current?.snapToIndex(2); // Use index 2 for the 75% height
     setSelectedRestaurant(sampleRestaurants[index]);
   };
 
@@ -137,18 +139,26 @@ export function Map() {
 
   // Updated renderRestaurantCard function
   const renderRestaurantCard = (item) => (
-    <View style={styles.restaurantCard}>
-      <Text style={styles.restaurantName}>{item.name}</Text>
+    <View className="bg-white rounded-lg">
+      <Text className="text-2xl font-bold pb-1">{item.name}</Text>
+      {/* <View className=""> */}
       <Image
         source="https://onenewchange.com/sites/one_new_change/files/styles/shop_gallery_small/public/images/gallery/gallery_nandos_new_cutlery_2.jpg?itok=ENpDDNnK"
-        style={styles.restaurantImage}
+        className="w-full h-48 object-cover"
+        style={{
+          width: "100%",
+          height: "100%",
+          resizeMode: "cover",
+          borderRadius: 9,
+        }}
       />
-      <View style={styles.restaurantInfo}>
-        <Text style={styles.restaurantDetails}>
+      {/* </View> */}
+      <View className="p-4">
+        <Text className="text-sm text-gray-600 mb-2">
           {item.price_rating} • {item.distance} km • {item.average_prep_time}{" "}
           min
         </Text>
-        <Text style={styles.restaurantHours}>
+        <Text className="text-sm text-gray-600">
           Opens: {item.opens_at} • Closes: {item.closes_at}
         </Text>
       </View>
@@ -304,7 +314,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     padding: 16,
-    // Removed backgroundColor
+    backgroundColor: "#f8f8f8", // Light gray background for the title
   },
   restaurantImage: {
     width: "100%",
