@@ -117,7 +117,7 @@ export default function SearchScreen() {
         }}
       />
       <StatusBar style="light" />
-      {toggleView ? (
+      {/* {toggleView ? (
         <Text>List View</Text>
       ) : (
         // <ListView setToggleView={setToggleView} />
@@ -168,7 +168,7 @@ export default function SearchScreen() {
             size={20}
           />
         </Pressable>
-      </View>
+      </View> */}
       <StatusBar style="light" />
     </>
   );
