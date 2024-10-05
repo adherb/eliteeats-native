@@ -86,6 +86,7 @@ export function Map() {
 
   // Update snap points to include a 75% option
   // const snapPoints = React.useMemo(() => ["25%", "50%", "75%"], []);
+
   const snapPoints = React.useMemo(() => ["75%"], []);
 
   const router = useRouter();

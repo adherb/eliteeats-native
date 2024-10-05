@@ -48,3 +48,17 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Build Commands
+
+eas build --profile staging
+
+eas device:list
+
+https://docs.expo.dev/get-started/set-up-your-environment/?platform=ios&device=physical&mode=development-build&buildEnv=local#set-up-an-ios-device-with-a-development-build
+
+eas build --profile=development:simulator --platform=ios
+npx expo start --dev-client
+
+npx expo-doctor  
+npx expo install --check

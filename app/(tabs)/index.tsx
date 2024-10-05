@@ -117,18 +117,10 @@ export default function SearchScreen() {
         }}
       />
       <StatusBar style="light" />
-      {toggleView ? (
-        <Text>List View</Text>
-      ) : (
-        // <ListView setToggleView={setToggleView} />
-        // <Text>Map View</Text>
-        <Map setToggleView={setToggleView} markers={locations} />
-      )}
+      <Map markers={locations} />
+
       <View className="absolute top-20 left-0 right-0 flex-row mx-2">
-        <Pressable
-          className="flex-1"
-          onPress={() => router.push("/search-location")}
-        >
+        <Pressable className="flex-1" onPress={() => router.push("/")}>
           <View>
             <View>
               <View

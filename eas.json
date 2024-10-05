@@ -1,0 +1,38 @@
+{
+  "cli": {
+    "version": ">= 5.4.0",
+    "promptToConfigurePushNotifications": false
+  },
+  "build": {
+    "development:simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      // "channel": "development",
+      "ios": {
+        "simulator": true
+      }
+      //   "env": {
+      //     "EXPO_PUBLIC_API_URL": "https://staging.harty.com.au/api",
+      //     "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51O1MPpJHiqJULGwUdPmEVSYayH5zWOHrmw6tuJfmcPKTNUYSPwcxm0jNHa6JOP6hQ0GJF107yGZ8kyYrQJgXhYIr00Yl4z8Bkx"
+      //   }
+    },
+    "staging": {
+      "distribution": "internal",
+      "channel": "staging"
+      //   "env": {
+      //     "EXPO_PUBLIC_API_URL": "https://staging.harty.com.au/api",
+      //     "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51O1MPpJHiqJULGwUdPmEVSYayH5zWOHrmw6tuJfmcPKTNUYSPwcxm0jNHa6JOP6hQ0GJF107yGZ8kyYrQJgXhYIr00Yl4z8Bkx"
+      //   }
+    },
+    "production": {
+      "channel": "production"
+      //   "env": {
+      //     "EXPO_PUBLIC_API_URL": "https://harty.com.au/api",
+      //     "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51O1MPpJHiqJULGwUdPmEVSYayH5zWOHrmw6tuJfmcPKTNUYSPwcxm0jNHa6JOP6hQ0GJF107yGZ8kyYrQJgXhYIr00Yl4z8Bkx"
+      //   }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
