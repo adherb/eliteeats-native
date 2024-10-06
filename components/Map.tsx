@@ -432,8 +432,9 @@ export function Map() {
                 onPress={() => handleMarkerPress(index)}
               >
                 <Image
-                  source={require("./../assets/images/custom-map-pin.png")}
+                  source={require("../assets/images/custom-map-pin.png")}
                   className="w-auto h-10"
+                  style={{ width: 40, height: 40 }} // Use explicit width and heigh
                   // onPress={() => handleMarkerPress(index)}
                 />
                 <Callout tooltip={true} />
