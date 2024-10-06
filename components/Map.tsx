@@ -28,38 +28,116 @@ const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
 
 // Add this near the top of your file, outside of the Map function
+// const sampleRestaurants = [
+//   {
+//     id: "1",
+//     name: "Sokyo",
+//     latitude: -33.8683,
+//     longitude: 151.1998,
+//     image:
+//       "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0f/e1/6d/6b/sokyo-s-elegant-dining.jpg?w=2000&h=-1&s=1",
+//     distance: 1.2,
+//     price_rating: "$$",
+//     average_prep_time: 20,
+//     opens_at: "11:00",
+//     closes_at: "22:00",
+//   },
+//   {
+//     id: "2",
+//     name: "Nobu",
+//     latitude: -33.8618,
+//     longitude: 151.1998,
+//     image:
+//       "https://static.ffx.io/images/$zoom_1%2C$multiply_0.744%2C$ratio_1.777778%2C$width_2000%2C$x_0%2C$y_136/t_crop_custom/q_62%2Cf_auto/b3fa2c79d55f93381029e0fc1bc562c4fc60d54d",
+//     distance: 0.8,
+//     price_rating: "$$$",
+//     average_prep_time: 25,
+//     opens_at: "12:00",
+//     closes_at: "21:30",
+//   },
+//   {
+//     id: "3",
+//     name: "Kazan",
+//     latitude: -33.8688,
+//     longitude: 151.2093,
+//     image:
+//       "https://cdn.concreteplayground.com/content/uploads/2023/09/Nobu-Sydney-_-Haku-_-Jude-Cohen-_-2023-7-1920x1440.jpg",
+//     distance: 1.5,
+//     price_rating: "$",
+//     average_prep_time: 15,
+//     opens_at: "10:00",
+//     closes_at: "23:00",
+//   },
+// ];
+
 const sampleRestaurants = [
   {
     id: "1",
-    name: "Joe's Pizza",
-    latitude: -33.8688,
-    longitude: 151.2093,
+    name: "Sokyo",
+    latitude: -33.8683,
+    longitude: 151.1998,
+    address:
+      "Level G, The Darling at The Star, 80 Pyrmont Street, Pyrmont NSW 2009",
     image:
-      "https://cdn.concreteplayground.com/content/uploads/2023/09/Nobu-Sydney-_-Haku-_-Jude-Cohen-_-2023-7-1920x1440.jpg",
+      "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0f/e1/6d/6b/sokyo-s-elegant-dining.jpg?w=2000&h=-1&s=1",
     distance: 1.2,
     price_rating: "$$",
     average_prep_time: 20,
     opens_at: "11:00",
     closes_at: "22:00",
+    cuisine: ["Japanese", "Sushi"],
+    tags: ["Fine Dining", "Hotel Restaurant"],
+    reviews: [
+      {
+        id: 1,
+        author: "John D.",
+        rating: 5,
+        text: "Exceptional sushi and ambiance!",
+      },
+      {
+        id: 2,
+        author: "Sarah M.",
+        rating: 4,
+        text: "Great food, but a bit pricey.",
+      },
+    ],
   },
   {
     id: "2",
-    name: "Sushi Paradise",
-    latitude: -33.8701,
-    longitude: 151.2055,
+    name: "Nobu",
+    latitude: -33.8618,
+    longitude: 151.1998,
+    address: "Crown Sydney, Level 2/1 Barangaroo Avenue, Barangaroo NSW 2000",
     image:
-      "https://cdn.concreteplayground.com/content/uploads/2023/09/Nobu-Sydney-_-Haku-_-Jude-Cohen-_-2023-7-1920x1440.jpg",
+      "https://static.ffx.io/images/$zoom_1%2C$multiply_0.744%2C$ratio_1.777778%2C$width_2000%2C$x_0%2C$y_136/t_crop_custom/q_62%2Cf_auto/b3fa2c79d55f93381029e0fc1bc562c4fc60d54d",
     distance: 0.8,
     price_rating: "$$$",
     average_prep_time: 25,
     opens_at: "12:00",
     closes_at: "21:30",
+    cuisine: ["Japanese", "Peruvian"],
+    tags: ["Fine Dining", "Fusion", "Celebrity Chef"],
+    reviews: [
+      {
+        id: 1,
+        author: "Emily R.",
+        rating: 5,
+        text: "Amazing fusion flavors! A must-visit.",
+      },
+      {
+        id: 2,
+        author: "Michael T.",
+        rating: 4,
+        text: "Innovative dishes, but portions are small.",
+      },
+    ],
   },
   {
     id: "3",
-    name: "Burger Bliss",
-    latitude: -33.8675,
-    longitude: 151.207,
+    name: "Kazan",
+    latitude: -33.8689,
+    longitude: 151.2068,
+    address: "69 Pitt St, Sydney NSW 2000",
     image:
       "https://cdn.concreteplayground.com/content/uploads/2023/09/Nobu-Sydney-_-Haku-_-Jude-Cohen-_-2023-7-1920x1440.jpg",
     distance: 1.5,
@@ -67,6 +145,82 @@ const sampleRestaurants = [
     average_prep_time: 15,
     opens_at: "10:00",
     closes_at: "23:00",
+    cuisine: ["Japanese"],
+    tags: ["Izakaya", "Casual Dining"],
+    reviews: [
+      {
+        id: 1,
+        author: "Lisa W.",
+        rating: 4,
+        text: "Authentic izakaya experience in Sydney!",
+      },
+      {
+        id: 2,
+        author: "David L.",
+        rating: 3,
+        text: "Good food, but service was a bit slow.",
+      },
+    ],
+  },
+  {
+    id: "4",
+    name: "Mr. Wong",
+    latitude: -33.8651,
+    longitude: 151.2075,
+    address: "3 Bridge Ln, Sydney NSW 2000",
+    image:
+      "https://s3.ap-southeast-2.amazonaws.com/production.assets.merivale.com.au/wp-content/uploads/2017/06/30104217/mrwong_gallery_3.jpg",
+    distance: 0.9,
+    price_rating: "$$$",
+    average_prep_time: 30,
+    opens_at: "12:00",
+    closes_at: "23:00",
+    cuisine: ["Chinese", "Cantonese"],
+    tags: ["Fine Dining", "Dimsum"],
+    reviews: [
+      {
+        id: 1,
+        author: "Anna K.",
+        rating: 5,
+        text: "Best dim sum in Sydney! Loved the atmosphere.",
+      },
+      {
+        id: 2,
+        author: "Tom H.",
+        rating: 4,
+        text: "Excellent food, but can be crowded on weekends.",
+      },
+    ],
+  },
+  {
+    id: "5",
+    name: "Uncle Ming's",
+    latitude: -33.8688,
+    longitude: 151.2092,
+    address: "55 York St, Sydney NSW 2000",
+    image:
+      "https://media-cdn.tripadvisor.com/media/photo-s/18/3d/f5/f5/caption.jpg",
+    distance: 0.7,
+    price_rating: "$$",
+    average_prep_time: 20,
+    opens_at: "16:00",
+    closes_at: "02:00",
+    cuisine: ["Chinese", "Asian Fusion"],
+    tags: ["Bar", "Cocktails", "Late Night"],
+    reviews: [
+      {
+        id: 1,
+        author: "Chris P.",
+        rating: 4,
+        text: "Great cocktails and fun atmosphere!",
+      },
+      {
+        id: 2,
+        author: "Sophie L.",
+        rating: 5,
+        text: "Perfect spot for late-night drinks and snacks.",
+      },
+    ],
   },
 ];
 
@@ -90,7 +244,7 @@ export function Map() {
   // Update snap points to include a 75% option
   // const snapPoints = React.useMemo(() => ["25%", "50%", "75%"], []);
 
-  const snapPoints = React.useMemo(() => ["75%"], []);
+  const snapPoints = React.useMemo(() => ["85%"], []);
 
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -149,7 +303,7 @@ export function Map() {
         source={{ uri: item.image }}
         style={{
           width: "100%",
-          height: 192, // 48 * 4 = 192 (assuming 1 rem = 4px)
+          height: 192,
           objectFit: "cover",
         }}
         placeholder={blurhash}
@@ -158,9 +312,13 @@ export function Map() {
       />
       <View className="p-4">
         <Text className="text-2xl font-bold mb-2">{item.name}</Text>
+        <Text className="text-gray-600 mb-2">{item.cuisine.join(", ")}</Text>
+        <Text className="text-gray-500 text-sm mb-2">{item.address}</Text>
         <View className="flex-row items-center mb-2">
           <Text className="text-yellow-500 font-bold mr-1">★ 4.5</Text>
-          <Text className="text-gray-600 text-sm">(500+ reviews)</Text>
+          <Text className="text-gray-600 text-sm">
+            ({item.reviews.length} reviews)
+          </Text>
         </View>
         <Text className="text-gray-700 mb-2">
           {item.price_rating} • {item.distance.toFixed(1)} km away •{" "}
@@ -169,13 +327,35 @@ export function Map() {
         <Text className="text-gray-600 mb-3">
           Open: {item.opens_at} - {item.closes_at}
         </Text>
-        <View className="flex-row flex-wrap">
-          <View className="bg-gray-200 rounded-full px-3 py-1 mr-2 mb-2">
-            <Text className="text-sm text-gray-700">Italian</Text>
-          </View>
-          <View className="bg-gray-200 rounded-full px-3 py-1 mr-2 mb-2">
-            <Text className="text-sm text-gray-700">Pizza</Text>
-          </View>
+        <View className="flex-row flex-wrap mb-4">
+          {item.tags.map((tag, index) => (
+            <View
+              key={index}
+              className="bg-gray-200 rounded-full px-3 py-1 mr-2 mb-2"
+            >
+              <Text className="text-sm text-gray-700">{tag}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Reviews Section */}
+        <View className="mt-4">
+          <Text className="text-xl font-semibold mb-2">Recent Reviews</Text>
+          {item.reviews.map((review) => (
+            <View
+              key={review.id}
+              className="mb-3 pb-3 border-b border-gray-200"
+            >
+              <View className="flex-row justify-between items-center mb-1">
+                <Text className="font-medium">{review.author}</Text>
+                <View className="flex-row items-center">
+                  <Text className="text-yellow-500 mr-1">★</Text>
+                  <Text>{review.rating}</Text>
+                </View>
+              </View>
+              <Text className="text-gray-600">{review.text}</Text>
+            </View>
+          ))}
         </View>
       </View>
     </View>
