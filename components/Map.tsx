@@ -427,9 +427,15 @@ export function Map() {
                   longitude: Number(location.longitude),
                 }}
                 title={location.name}
+                style={{ width: 50, height: 50 }}
                 ref={(ref) => (markerRefs.current[index] = ref)}
                 onPress={() => handleMarkerPress(index)}
               >
+                <Image
+                  source={require("./../assets/images/custom-map-pin.png")}
+                  className="w-auto h-10"
+                  // onPress={() => handleMarkerPress(index)}
+                />
                 <Callout tooltip={true} />
               </Marker>
             ))}
