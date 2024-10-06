@@ -22,53 +22,8 @@ import { Image } from "expo-image";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
-const timeZone = "Australia/Brisbane"; // TODO: make this dynamic
-
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
-
-// Add this near the top of your file, outside of the Map function
-// const sampleRestaurants = [
-//   {
-//     id: "1",
-//     name: "Sokyo",
-//     latitude: -33.8683,
-//     longitude: 151.1998,
-//     image:
-//       "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0f/e1/6d/6b/sokyo-s-elegant-dining.jpg?w=2000&h=-1&s=1",
-//     distance: 1.2,
-//     price_rating: "$$",
-//     average_prep_time: 20,
-//     opens_at: "11:00",
-//     closes_at: "22:00",
-//   },
-//   {
-//     id: "2",
-//     name: "Nobu",
-//     latitude: -33.8618,
-//     longitude: 151.1998,
-//     image:
-//       "https://static.ffx.io/images/$zoom_1%2C$multiply_0.744%2C$ratio_1.777778%2C$width_2000%2C$x_0%2C$y_136/t_crop_custom/q_62%2Cf_auto/b3fa2c79d55f93381029e0fc1bc562c4fc60d54d",
-//     distance: 0.8,
-//     price_rating: "$$$",
-//     average_prep_time: 25,
-//     opens_at: "12:00",
-//     closes_at: "21:30",
-//   },
-//   {
-//     id: "3",
-//     name: "Kazan",
-//     latitude: -33.8688,
-//     longitude: 151.2093,
-//     image:
-//       "https://cdn.concreteplayground.com/content/uploads/2023/09/Nobu-Sydney-_-Haku-_-Jude-Cohen-_-2023-7-1920x1440.jpg",
-//     distance: 1.5,
-//     price_rating: "$",
-//     average_prep_time: 15,
-//     opens_at: "10:00",
-//     closes_at: "23:00",
-//   },
-// ];
 
 const sampleRestaurants = [
   {
@@ -238,12 +193,10 @@ export function Map() {
     longitudeDelta: 0.0421,
   });
 
-  const [selectedLocation, setSelectedLocation] = useState(null);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 
   // Update snap points to include a 75% option
   // const snapPoints = React.useMemo(() => ["25%", "50%", "75%"], []);
-
   const snapPoints = React.useMemo(() => ["85%"], []);
 
   const router = useRouter();
@@ -278,25 +231,6 @@ export function Map() {
     setSelectedRestaurant(sampleRestaurants[index]);
   };
 
-  const width = Dimensions.get("window").width;
-  // const ITEM_WIDTH = Math.round(width * 0.7); // Width of the main item
-  // const ITEM_HEIGHT = 160;
-  // const SPACING = 10; // Spacing between items
-
-  // const handleCarouselItemChange = (index) => {
-  //   let location = sampleRestaurants[index];
-
-  //   mapRef.current.animateToRegion({
-  //     latitude: location && Number(location?.latitude),
-  //     longitude: location && Number(location?.longitude),
-  //     latitudeDelta: 0.09,
-  //     longitudeDelta: 0.035,
-  //   });
-
-  //   markerRefs.current[index]?.showCallout();
-  // };
-
-  // Updated renderRestaurantCard function
   const renderRestaurantCard = (item) => (
     <View className="bg-white rounded-lg overflow-hidden mb-5 shadow-md">
       <Image
@@ -361,45 +295,6 @@ export function Map() {
     </View>
   );
 
-  /* Commented out carousel item renderer
-  const renderCarouselItem = ({ item }) => (
-    <View
-      style={{
-        width: ITEM_WIDTH,
-        height: ITEM_HEIGHT,
-        marginHorizontal: SPACING / 2,
-        borderRadius: 15,
-        overflow: "hidden",
-      }}
-      className="bg-white mb-2"
-    >
-      <Image
-        source="https://onenewchange.com/sites/one_new_change/files/styles/shop_gallery_small/public/images/gallery/gallery_nandos_new_cutlery_2.jpg?itok=ENpDDNnK"
-        style={{
-          width: "100%",
-          height: "100%",
-          resizeMode: "cover",
-        }}
-      />
-      <View
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          padding: 10,
-        }}
-      >
-        <Text className="text-white font-bold">{item.name}</Text>
-        <Text className="text-white">
-          {item.rating} Stars, {item.review_count} Reviews
-        </Text>
-      </View>
-    </View>
-  );
-  */
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -443,30 +338,6 @@ export function Map() {
           </MapView>
 
           <View style={styles.overlay} pointerEvents="none" />
-
-          {/* Commented out Carousel component
-          <Carousel
-            loop
-            width={ITEM_WIDTH + SPACING}
-            height={ITEM_HEIGHT}
-            autoPlay={false}
-            data={sampleRestaurants}
-            scrollAnimationDuration={1000}
-            onSnapToItem={handleCarouselItemChange}
-            renderItem={renderCarouselItem}
-            style={styles.carouselContainer}
-            mode="parallax"
-            modeConfig={{
-              parallaxScrollingScale: 0.9,
-              parallaxScrollingOffset: 50,
-            }}
-            snapEnabled={true}
-            defaultIndex={0}
-            panGestureHandlerProps={{
-              activeOffsetX: [-10, 10],
-            }}
-          />
-          */}
 
           <BottomSheet
             ref={bottomSheetRef}
