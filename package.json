@@ -15,6 +15,7 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@aws-sdk/client-rds-data": "^3.665.0",
     "@expo/vector-icons": "^14.0.3",
     "@gorhom/bottom-sheet": "^4.6.4",
     "@hookform/resolvers": "^3.9.0",
