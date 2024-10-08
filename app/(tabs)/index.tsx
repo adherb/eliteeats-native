@@ -226,18 +226,18 @@ export default function SearchScreen() {
           <Ionicons name="search" size={20} color="gray" />
           <Text className="ml-2 text-gray-600">Search Restaurants</Text>
         </Pressable> */}
-        <View className="flex-row justify-between">
-          <Pressable className="bg-red-100 rounded-full px-4 py-2 flex-1 mr-2">
+        <View className="flex-row justify-between gap-2">
+          <Pressable className="bg-red-100 rounded-lg px-0 py-2 flex-1">
             <Text className="text-gray-800 text-center">
               {selectedCuisine || "Cuisine"}
             </Text>
           </Pressable>
-          <Pressable className="bg-red-100 rounded-full px-4 py-2 flex-1 mx-2">
+          <Pressable className="bg-red-100 rounded-lg px-0 py-2 flex-1">
             <Text className="text-gray-800 text-center">
               {selectedTag || "Tags"}
             </Text>
           </Pressable>
-          <Pressable className="bg-red-100 rounded-full px-4 py-2 flex-1 ml-2">
+          <Pressable className="bg-red-100 rounded-lg px-0 py-2 flex-1">
             <Text className="text-gray-800 text-center">{distance}km</Text>
           </Pressable>
         </View>
