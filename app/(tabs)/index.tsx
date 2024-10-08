@@ -33,10 +33,13 @@ const Badge = ({ label, isSelected, onPress }) => (
 export default function SearchScreen() {
   const router = useRouter();
   const [toggleView, setToggleView] = useState(false);
-  const [selectedCuisines, setSelectedCuisines] = useState([]);
+  const [selectedCuisine, setSelectedCuisine] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
   const [distance, setDistance] = useState(5);
   const [radius, setRadius] = useState(5000); // radius in meters
+  const [openCuisine, setOpenCuisine] = useState(false);
+  const [openTags, setOpenTags] = useState(false);
+  const [openDistance, setOpenDistance] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const cuisines = ["Cafes", "Japanese", "Italian", "Fast Food", "Chinese"];
   const tags = [
@@ -89,13 +92,24 @@ export default function SearchScreen() {
 
   const [showDistanceSlider, setShowDistanceSlider] = useState(false);
 
-  const toggleDropdown = (dropdownName) => {
+  const toggleCuisineDropdown = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
-  };
+    setOpenCuisine((prev) => !prev);
+  }, []);
 
-  const toggleDistanceSlider = useCallback(() => {
-    setShowDistanceSlider((prev) => !prev);
+  const toggleTagsDropdown = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setOpenTags((prev) => !prev);
+  }, []);
+
+  const toggleDistanceDropdown = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setOpenDistance((prev) => !prev);
+  }, []);
+
+  const toggleDropdown = useCallback((dropdownName) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setOpenDropdown((prev) => (prev === dropdownName ? null : dropdownName));
   }, []);
 
   const updateMapRadius = useCallback((distanceKm) => {
@@ -111,18 +125,16 @@ export default function SearchScreen() {
   }, []);
 
   const toggleCuisine = (cuisine) => {
-    setSelectedCuisines((prev) =>
-      prev.includes(cuisine)
-        ? prev.filter((c) => c !== cuisine)
-        : [...prev, cuisine]
+    setSelectedCuisine((prevCuisine) =>
+      prevCuisine === cuisine ? "" : cuisine
     );
   };
 
-  const toggleTag = (tag) => {
+  const toggleTag = useCallback((tag) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
-  };
+  }, []);
 
   return (
     <>
@@ -150,9 +162,7 @@ export default function SearchScreen() {
             onPress={() => toggleDropdown("cuisine")}
           >
             <Text className="text-gray-800 text-center">
-              {selectedCuisines.length > 0
-                ? `${selectedCuisines.length} selected`
-                : "Cuisine"}
+              {selectedCuisine || "Cuisine"}
             </Text>
           </Pressable>
           <Pressable
@@ -184,7 +194,7 @@ export default function SearchScreen() {
               <Badge
                 key={cuisine}
                 label={cuisine}
-                isSelected={selectedCuisines.includes(cuisine)}
+                isSelected={selectedCuisine === cuisine}
                 onPress={() => toggleCuisine(cuisine)}
               />
             ))}
@@ -219,9 +229,9 @@ export default function SearchScreen() {
               step={1}
               value={distance}
               onValueChange={updateMapRadius}
-              minimumTrackTintColor="#007AFF"
+              minimumTrackTintColor="#FF0000"
               maximumTrackTintColor="#000000"
-              thumbTintColor="#007AFF"
+              thumbTintColor="#FF0000"
             />
           </View>
         )}
