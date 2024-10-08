@@ -1,5 +1,12 @@
 import React, { useState, useRef, useCallback } from "react";
-import { View, Text, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  FlatList,
+  Animated,
+  LayoutAnimation,
+} from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Map } from "@/components/Map";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,58 +16,73 @@ import * as Location from "expo-location";
 import * as DropdownMenu from "zeego/dropdown-menu";
 import Slider from "@react-native-community/slider"; // You may need to install this package
 
-const CuisineDropdown = DropdownMenu.create((props) => {
-  return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <Pressable className="bg-red-200 rounded-lg px-4 py-2 self-start">
-          <Text className="text-gray-800">
-            {props.selectedCuisine || "Cuisine"}
-          </Text>
-        </Pressable>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Content>
-        {props.cuisines.map((cuisine) => (
-          <DropdownMenu.Item
-            key={cuisine}
-            onSelect={() => props.onSelect(cuisine)}
-          >
-            <DropdownMenu.ItemTitle>
-              {cuisine || "All Cuisines"}
-            </DropdownMenu.ItemTitle>
-          </DropdownMenu.Item>
-        ))}
-      </DropdownMenu.Content>
-    </DropdownMenu.Root>
-  );
-}, "CuisineDropdown");
+const CustomDropdown = ({
+  options,
+  selectedValue,
+  onSelect,
+  placeholder,
+  isOpen,
+  onToggle,
+}) => {
+  const animatedHeight = useRef(new Animated.Value(0)).current;
 
-const TagsDropdown = DropdownMenu.create((props) => {
+  React.useEffect(() => {
+    Animated.timing(animatedHeight, {
+      toValue: isOpen ? 1 : 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  }, [isOpen]);
+
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <Pressable className="bg-red-200 rounded-full px-4 py-2 self-start">
-          <Text className="text-gray-800">{props.selectedTag || "Tags"}</Text>
-        </Pressable>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Content>
-        {props.tags.map((tag) => (
-          <DropdownMenu.Item key={tag} onSelect={() => props.onSelect(tag)}>
-            <DropdownMenu.ItemTitle>{tag || "All Tags"}</DropdownMenu.ItemTitle>
-          </DropdownMenu.Item>
-        ))}
-      </DropdownMenu.Content>
-    </DropdownMenu.Root>
+    <View className="flex-1">
+      <Pressable
+        className="bg-gray-100 rounded-lg px-0 py-2"
+        onPress={onToggle}
+      >
+        <Text className="text-gray-800 text-center">
+          {selectedValue || placeholder}
+        </Text>
+      </Pressable>
+      <Animated.View
+        style={{
+          maxHeight: animatedHeight.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 200],
+          }),
+          overflow: "hidden",
+        }}
+      >
+        <FlatList
+          data={options}
+          keyExtractor={(item) => item.toString()}
+          renderItem={({ item }) => (
+            <Pressable
+              className="p-4 border-b border-gray-200 bg-white"
+              onPress={() => {
+                onSelect(item);
+                onToggle();
+              }}
+            >
+              <Text>{item}</Text>
+            </Pressable>
+          )}
+        />
+      </Animated.View>
+    </View>
   );
-}, "TagsDropdown");
+};
 
 export default function SearchScreen() {
   const router = useRouter();
   const [toggleView, setToggleView] = useState(false);
   const [selectedCuisine, setSelectedCuisine] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
+  const [distance, setDistance] = useState(5);
+  const [openDropdown, setOpenDropdown] = useState(null);
   const cuisines = ["", "Cafes", "Japanese", "Italian", "Fast Food"];
   const tags = ["", "Vegetarian", "Vegan", "Gluten-Free", "Halal", "Kosher"];
+  const distances = [1, 5, 10, 20, 50];
 
   const headerTitleColour = "black";
   const backgroundColour = "white";
@@ -101,8 +123,12 @@ export default function SearchScreen() {
     );
   };
 
-  const [distance, setDistance] = useState(5); // Default to 5km
   const [showDistanceSlider, setShowDistanceSlider] = useState(false);
+
+  const toggleDropdown = (dropdownName) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
+  };
 
   const toggleDistanceSlider = useCallback(() => {
     setShowDistanceSlider((prev) => !prev);
@@ -218,29 +244,45 @@ export default function SearchScreen() {
       </View> */}
 
       {/* New section */}
-      <View className="absolute top-0 left-0 right-0 bg-white pt-20 pb-4 px-4">
-        {/* <Pressable
-          className="bg-gray-100 rounded-full px-4 py-3 mb-4 flex-row items-center"
-          onPress={() => router.push("/")}
-        >
-          <Ionicons name="search" size={20} color="gray" />
-          <Text className="ml-2 text-gray-600">Search Restaurants</Text>
-        </Pressable> */}
+      <View className="absolute top-0 left-0 right-0 bg-white pt-20 pb-4 px-4 z-10">
         <View className="flex-row justify-between gap-2">
-          <Pressable className="bg-gray-100 rounded-lg px-0 py-2 flex-1">
-            <Text className="text-gray-800 text-center">
-              {selectedCuisine || "Cuisine"}
-            </Text>
-          </Pressable>
-          <Pressable className="bg-gray-100 rounded-lg px-0 py-2 flex-1">
-            <Text className="text-gray-800 text-center">
-              {selectedTag || "Tags"}
-            </Text>
-          </Pressable>
-          <Pressable className="bg-gray-100 rounded-lg px-0 py-2 flex-1">
+          <CustomDropdown
+            options={cuisines}
+            selectedValue={selectedCuisine}
+            onSelect={setSelectedCuisine}
+            placeholder="Cuisine"
+            isOpen={openDropdown === "cuisine"}
+            onToggle={() => toggleDropdown("cuisine")}
+          />
+          <CustomDropdown
+            options={tags}
+            selectedValue={selectedTag}
+            onSelect={setSelectedTag}
+            placeholder="Tags"
+            isOpen={openDropdown === "tags"}
+            onToggle={() => toggleDropdown("tags")}
+          />
+          <Pressable
+            className="bg-gray-100 rounded-lg px-0 py-2 flex-1"
+            onPress={toggleDistanceSlider}
+          >
             <Text className="text-gray-800 text-center">{distance}km</Text>
           </Pressable>
         </View>
+        {showDistanceSlider && (
+          <View className="mt-2">
+            <Slider
+              minimumValue={1}
+              maximumValue={50}
+              step={1}
+              value={distance}
+              onValueChange={setDistance}
+              minimumTrackTintColor="#FF0000"
+              maximumTrackTintColor="#000000"
+              thumbTintColor="#FF0000"
+            />
+          </View>
+        )}
       </View>
 
       <Pressable
