@@ -13,7 +13,7 @@ const useRestaurants = (
 ): UseQueryResult<Restaurant[], Error> => {
   const { cuisine, tag, sortBy, limit } = options;
 
-  return useQuery<Restaurant[], Error>({
+  return useQuery({
     queryKey: ["restaurants", cuisine, tag, sortBy, limit],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -22,13 +22,33 @@ const useRestaurants = (
       if (sortBy) params.append("sortBy", sortBy);
       if (limit) params.append("limit", limit.toString());
 
-      const response = await fetch(
-        `https://staging.eliteeats.io/api/restaurants?${params}`
-      );
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
+      const url = `https://eliteeats.io/api/restaurants?${params.toString()}`;
+
+      try {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(
+            `API error: ${response.status} ${response.statusText}${
+              errorData ? ` - ${JSON.stringify(errorData)}` : ""
+            }`
+          );
+        }
+
+        const data = await response.json();
+
+        if (!Array.isArray(data)) {
+          throw new Error(
+            `Invalid data format: expected an array, got ${typeof data}`
+          );
+        }
+
+        return data as Restaurant[];
+      } catch (error) {
+        console.error("Error fetching restaurants:", error);
+        throw error;
       }
-      return response.json();
     },
   });
 };
