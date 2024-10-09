@@ -179,6 +179,25 @@ const sampleRestaurants = [
   },
 ];
 
+// Add this constant outside of your component
+const customMapStyle = [
+  {
+    featureType: "poi",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "transit",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "landscape",
+    elementType: "all",
+    stylers: [{ visibility: "on" }],
+  },
+];
+
 export function Map() {
   const mapRef = useRef<MapView | null>(null);
   // const carouselRef = useRef<any>(null);
@@ -313,6 +332,11 @@ export function Map() {
             zoomEnabled={true}
             rotateEnabled={true}
             pitchEnabled={true}
+            customMapStyle={customMapStyle}
+            showsPointsOfInterest={false}
+            showsBuildings={false}
+            showsTraffic={false}
+            showsIndoors={false}
           >
             {sampleRestaurants.map((location, index) => (
               <Marker
@@ -326,12 +350,18 @@ export function Map() {
                 ref={(ref) => (markerRefs.current[index] = ref)}
                 onPress={() => handleMarkerPress(index)}
               >
-                <Image
+                {/* <Image
                   source={require("../assets/images/custom-map-pin.png")}
                   className="w-auto h-10"
-                  style={{ width: 40, height: 40 }} // Use explicit width and heigh
+                  style={{ width: 40, height: 40 }}
                   // onPress={() => handleMarkerPress(index)}
-                />
+                /> */}
+                <View style={styles.markerContainer}>
+                  <Image
+                    source={{ uri: location.image }}
+                    style={styles.markerImage}
+                  />
+                </View>
                 <Callout tooltip={true} />
               </Marker>
             ))}
@@ -547,5 +577,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     backgroundColor: "#000000c0",
+  },
+  markerContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "white",
+  },
+  markerImage: {
+    width: "100%",
+    height: "100%",
   },
 });
