@@ -273,10 +273,20 @@ export function Map() {
     animateMarker();
   };
 
-  const handleSheetChanges = useCallback((index: number) => {
-    console.log("handleSheetChanges", index);
-    setBottomSheetIndex(index);
-  }, []);
+  const handleSheetChanges = useCallback(
+    (index: number) => {
+      console.log("handleSheetChanges", index);
+      setBottomSheetIndex(index);
+
+      // Reset selected marker and restaurant when bottom sheet is closed
+      if (index === -1) {
+        setSelectedMarkerCoords(null);
+        setSelectedRestaurant(null);
+        markerAnimation.setValue(0); // Reset the animation value
+      }
+    },
+    [markerAnimation]
+  );
 
   const handleBottomSheetLayout = useCallback((event) => {
     const { height } = event.nativeEvent.layout;
@@ -394,38 +404,37 @@ export function Map() {
                 }}
                 onPress={() => handleMarkerPress(index)}
               >
-                <View style={styles.markerContainer}>
-                  <Image
-                    source={{ uri: location.image }}
-                    style={styles.markerImage}
-                  />
-                </View>
+                {selectedRestaurant && selectedRestaurant.id === location.id ? (
+                  <Animated.View
+                    style={[
+                      styles.selectedMarkerContainer,
+                      {
+                        transform: [
+                          {
+                            scale: markerAnimation.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [1, 1.2],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: location.image }}
+                      style={styles.selectedMarkerImage}
+                    />
+                  </Animated.View>
+                ) : (
+                  <View style={styles.markerContainer}>
+                    <Image
+                      source={{ uri: location.image }}
+                      style={styles.markerImage}
+                    />
+                  </View>
+                )}
               </Marker>
             ))}
-            {selectedMarkerCoords && (
-              <Marker coordinate={selectedMarkerCoords}>
-                <Animated.View
-                  style={[
-                    styles.selectedMarkerContainer,
-                    {
-                      transform: [
-                        {
-                          scale: markerAnimation.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [1, 1.2],
-                          }),
-                        },
-                      ],
-                    },
-                  ]}
-                >
-                  <Image
-                    source={{ uri: selectedRestaurant.image }}
-                    style={styles.selectedMarkerImage}
-                  />
-                </Animated.View>
-              </Marker>
-            )}
           </MapView>
 
           <BottomSheet
