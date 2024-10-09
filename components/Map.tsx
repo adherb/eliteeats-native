@@ -33,6 +33,7 @@ import BottomSheet, {
 } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useRestaurants } from "../lib/data";
+import * as Haptics from "expo-haptics";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
@@ -96,6 +97,9 @@ export function Map() {
   }, [markerAnimation]);
 
   const handleMarkerPress = (index) => {
+    // Trigger haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
     const restaurant = restaurants[index];
     setSelectedRestaurant(restaurant);
     setSelectedMarkerCoords({
@@ -180,7 +184,7 @@ export function Map() {
         <Text className="text-gray-600 mb-3">
           Open: {item.opens_at} - {item.closes_at}
         </Text>
-        {/* <View className="flex-row flex-wrap mb-4">
+        <View className="flex-row flex-wrap mb-4">
           {item.tags.map((tag, index) => (
             <View
               key={index}
@@ -189,7 +193,7 @@ export function Map() {
               <Text className="text-sm text-gray-700">{tag}</Text>
             </View>
           ))}
-        </View> */}
+        </View>
 
         {/* Reviews Section */}
         <View className="mt-4">
