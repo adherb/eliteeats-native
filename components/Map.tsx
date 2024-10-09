@@ -1,5 +1,11 @@
-import React from "react";
-import { useState, useRef, useEffect } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useEffect } from "react";
 import MapView, {
   Marker,
   Callout,
@@ -10,20 +16,43 @@ import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   Platform,
   ScrollView,
+  Dimensions,
+  Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import BottomSheet from "@gorhom/bottom-sheet";
+import BottomSheet, {
+  BottomSheetScrollView,
+  BottomSheetBackdrop,
+  BottomSheetBackdropProps,
+} from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
+
+const customMapStyle = [
+  {
+    featureType: "poi",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "transit",
+    elementType: "all",
+    stylers: [{ visibility: "off" }],
+  },
+  {
+    featureType: "landscape",
+    elementType: "all",
+    stylers: [{ visibility: "on" }],
+  },
+];
 
 const sampleRestaurants = [
   {
@@ -179,32 +208,11 @@ const sampleRestaurants = [
   },
 ];
 
-// Add this constant outside of your component
-const customMapStyle = [
-  {
-    featureType: "poi",
-    elementType: "all",
-    stylers: [{ visibility: "off" }],
-  },
-  {
-    featureType: "transit",
-    elementType: "all",
-    stylers: [{ visibility: "off" }],
-  },
-  {
-    featureType: "landscape",
-    elementType: "all",
-    stylers: [{ visibility: "on" }],
-  },
-];
-
 export function Map() {
   const mapRef = useRef<MapView | null>(null);
-  // const carouselRef = useRef<any>(null);
   const markerRefs = useRef([]);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  // Add default coordinates for Sydney
   const [region, setRegion] = useState({
     latitude: -33.8688,
     longitude: 151.2093,
@@ -213,42 +221,67 @@ export function Map() {
   });
 
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
+  const [selectedMarkerCoords, setSelectedMarkerCoords] = useState(null);
+  const [bottomSheetIndex, setBottomSheetIndex] = useState(-1);
+  const [markerAnimation] = useState(new Animated.Value(0));
 
-  // Update snap points to include a 75% option
-  // const snapPoints = React.useMemo(() => ["25%", "50%", "75%"], []);
-  const snapPoints = React.useMemo(() => ["85%"], []);
+  const snapPoints = useMemo(() => ["25%", "50%", "70%"], []);
 
   const router = useRouter();
   const colorScheme = useColorScheme();
+
   useEffect(() => {
-    // If location is not available, use the default Sydney coordinates
-    // if (!location) {
     setRegion({
       latitude: -33.8688,
       longitude: 151.2093,
       latitudeDelta: 0.0922,
       longitudeDelta: 0.0421,
     });
-    // }
   }, []);
 
-  const animateToRegion = (region) => {
-    if (mapRef.current) {
-      mapRef.current.animateToRegion(region, 1000);
-      setRegion(region);
-      // Removed setZoomLevel call
-    } else {
-      setTimeout(() => {
-        animateToRegion(region);
-      }, 100);
-    }
+  const animateMarker = useCallback(() => {
+    Animated.spring(markerAnimation, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  }, [markerAnimation]);
+
+  const handleMarkerPress = (index) => {
+    const restaurant = sampleRestaurants[index];
+    setSelectedRestaurant(restaurant);
+    setSelectedMarkerCoords({
+      latitude: restaurant.latitude,
+      longitude: restaurant.longitude,
+    });
+
+    // Calculate new region to position marker in top 25% of screen
+    const { width, height } = Dimensions.get("window");
+    const ASPECT_RATIO = width / height;
+    const LATITUDE_DELTA = 0.02;
+    const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+
+    const newRegion = {
+      latitude: restaurant.latitude - LATITUDE_DELTA * 0.325, // Move center point up
+      longitude: restaurant.longitude,
+      latitudeDelta: LATITUDE_DELTA,
+      longitudeDelta: LONGITUDE_DELTA,
+    };
+
+    mapRef.current?.animateToRegion(newRegion, 1000);
+    bottomSheetRef.current?.snapToIndex(2);
+    animateMarker();
   };
 
-  // Update handleMarkerPress function to open to 75% height
-  const handleMarkerPress = (index) => {
-    bottomSheetRef.current?.snapToIndex(0); // Use index 0 for the 75% height
-    setSelectedRestaurant(sampleRestaurants[index]);
-  };
+  const handleSheetChanges = useCallback((index: number) => {
+    console.log("handleSheetChanges", index);
+    setBottomSheetIndex(index);
+  }, []);
+
+  const handleBottomSheetLayout = useCallback((event) => {
+    const { height } = event.nativeEvent.layout;
+    setBottomSheetHeight(height);
+  }, []);
 
   const renderRestaurantCard = (item) => (
     <View className="bg-white rounded-lg overflow-hidden mb-5 shadow-md">
@@ -314,6 +347,17 @@ export function Map() {
     </View>
   );
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+      />
+    ),
+    []
+  );
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -333,10 +377,13 @@ export function Map() {
             rotateEnabled={true}
             pitchEnabled={true}
             customMapStyle={customMapStyle}
+            mapType="standard"
             showsPointsOfInterest={false}
             showsBuildings={false}
             showsTraffic={false}
             showsIndoors={false}
+            showsScale={false}
+            showsCompass={false}
           >
             {sampleRestaurants.map((location, index) => (
               <Marker
@@ -345,39 +392,55 @@ export function Map() {
                   latitude: Number(location.latitude),
                   longitude: Number(location.longitude),
                 }}
-                title={location.name}
-                style={{ width: 50, height: 50 }}
-                ref={(ref) => (markerRefs.current[index] = ref)}
                 onPress={() => handleMarkerPress(index)}
               >
-                {/* <Image
-                  source={require("../assets/images/custom-map-pin.png")}
-                  className="w-auto h-10"
-                  style={{ width: 40, height: 40 }}
-                  // onPress={() => handleMarkerPress(index)}
-                /> */}
                 <View style={styles.markerContainer}>
                   <Image
                     source={{ uri: location.image }}
                     style={styles.markerImage}
                   />
                 </View>
-                <Callout tooltip={true} />
               </Marker>
             ))}
+            {selectedMarkerCoords && (
+              <Marker coordinate={selectedMarkerCoords}>
+                <Animated.View
+                  style={[
+                    styles.selectedMarkerContainer,
+                    {
+                      transform: [
+                        {
+                          scale: markerAnimation.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [1, 1.2],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <Image
+                    source={{ uri: selectedRestaurant.image }}
+                    style={styles.selectedMarkerImage}
+                  />
+                </Animated.View>
+              </Marker>
+            )}
           </MapView>
-
-          <View style={styles.overlay} pointerEvents="none" />
 
           <BottomSheet
             ref={bottomSheetRef}
             index={-1}
             snapPoints={snapPoints}
+            onChange={handleSheetChanges}
             enablePanDownToClose={true}
+            backdropComponent={renderBackdrop}
           >
-            <ScrollView contentContainerStyle={styles.bottomSheetContent}>
+            <BottomSheetScrollView
+              contentContainerStyle={styles.contentContainer}
+            >
               {selectedRestaurant && renderRestaurantCard(selectedRestaurant)}
-            </ScrollView>
+            </BottomSheetScrollView>
           </BottomSheet>
         </View>
       </SafeAreaProvider>
@@ -388,6 +451,8 @@ export function Map() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 24,
+    backgroundColor: "grey",
   },
   map: {
     flex: 1,
@@ -401,182 +466,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: "rgba(0, 0, 0, 0.1)",
   },
-  bottomSheetContent: {
+  contentContainer: {
     padding: 16,
-  },
-  restaurantCard: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    overflow: "hidden",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  restaurantName: {
-    fontSize: 20,
-    fontWeight: "bold",
-    padding: 16,
-    backgroundColor: "#f8f8f8", // Light gray background for the title
-  },
-  restaurantImage: {
-    width: "100%",
-    height: 200, // Adjust this value as needed
-    resizeMode: "cover",
-  },
-  restaurantInfo: {
-    padding: 16,
-  },
-  restaurantDetails: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 8,
-  },
-  restaurantHours: {
-    fontSize: 14,
-    color: "#666",
-  },
-
-  // Existing carousel styles (kept for future reference)
-  carouselContainer: {
-    width: "100%",
-    position: "absolute",
-    bottom: 20,
-    left: 0,
-    right: 0,
-  },
-  safeAreaView: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.7)", // Optional: Add a semi-transparent background
-  },
-  calloutTitle: {
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  calloutDescription: {
-    marginBottom: 5,
-  },
-  calloutImage: {
-    width: 150,
-    height: 150,
-  },
-  calloutScrollView: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  calloutContainer: {
-    backgroundColor: "white",
-    padding: 10,
-    borderRadius: 5,
-    width: 200,
-  },
-  openButton: {
-    backgroundColor: "#007AFF",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
-  },
-  openButtonText: {
-    color: "white",
-    fontSize: 16,
-  },
-  modalContainer: {
-    flex: 1,
-    // justifyContent: "flex-end",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: "100%",
-    backgroundColor: "white",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-  },
-  modalText: {
-    fontSize: 18,
-    marginBottom: 20,
-  },
-  closeButton: {
-    backgroundColor: "#FF3B30",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
-  },
-  closeButtonText: {
-    color: "white",
-    fontSize: 16,
-  },
-  centeredView: {
-    // flex: 1,
-    // justifyContent: "center",
-    // alignItems: "center",
-    // marginTop: 22,
-    flex: 1,
-    justifyContent: "flex-end",
-    alignItems: "center",
-    marginTop: 22,
-  },
-  modalView: {
-    width: "90%",
-    height: "20%",
-    margin: 20,
-    marginBottom: 100,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  button: {
-    borderRadius: 10,
-    padding: 10,
-    elevation: 2,
-  },
-  buttonOpen: {
-    backgroundColor: "#2563eb",
-  },
-  buttonClose: {
-    backgroundColor: "#2563eb",
-  },
-  textStyle: {
-    color: "white",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  image: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  text: {
-    color: "white",
-    fontSize: 42,
-    lineHeight: 84,
-    fontWeight: "bold",
-    textAlign: "center",
-    backgroundColor: "#000000c0",
+    // zIndex: 1000,
   },
   markerContainer: {
     width: 40,
@@ -587,6 +479,18 @@ const styles = StyleSheet.create({
     borderColor: "white",
   },
   markerImage: {
+    width: "100%",
+    height: "100%",
+  },
+  selectedMarkerContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    overflow: "hidden",
+    borderWidth: 3,
+    borderColor: "red", // Changed from "#007AFF" to "red"
+  },
+  selectedMarkerImage: {
     width: "100%",
     height: "100%",
   },
