@@ -2,8 +2,11 @@ import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { Restaurant } from "./types";
 
 interface UseRestaurantsOptions {
-  cuisine?: string;
-  tag?: string;
+  lat?: number;
+  lon?: number;
+  radius?: number;
+  cuisines?: string;
+  tags?: string;
   sortBy?: "distance" | "rating";
   limit?: number;
 }
@@ -11,14 +14,17 @@ interface UseRestaurantsOptions {
 const useRestaurants = (
   options: UseRestaurantsOptions = {}
 ): UseQueryResult<Restaurant[], Error> => {
-  const { cuisine, tag, sortBy, limit } = options;
+  const { lat, lon, radius, cuisines, tags, sortBy, limit } = options;
 
   return useQuery({
-    queryKey: ["restaurants", cuisine, tag, sortBy, limit],
+    queryKey: ["restaurants", lat, lon, radius, cuisines, tags, sortBy, limit],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (cuisine) params.append("cuisine", cuisine);
-      if (tag) params.append("tag", tag);
+      if (lat) params.append("lat", lat.toString());
+      if (lon) params.append("lon", lon.toString());
+      if (radius) params.append("radius", radius.toString());
+      if (cuisines) params.append("cuisines", cuisines);
+      if (tags) params.append("tags", tags);
       if (sortBy) params.append("sortBy", sortBy);
       if (limit) params.append("limit", limit.toString());
 
@@ -50,6 +56,7 @@ const useRestaurants = (
         throw error;
       }
     },
+    enabled: !!lat && !!lon && !!radius, // Only run the query when we have lat, lon, and radius
   });
 };
 

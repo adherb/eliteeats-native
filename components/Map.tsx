@@ -34,6 +34,7 @@ import BottomSheet, {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useRestaurants } from "../lib/data";
 import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
@@ -60,7 +61,16 @@ export function Map() {
   const mapRef = useRef<MapView | null>(null);
   const markerRefs = useRef([]);
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const { data: restaurants, isLoading, error } = useRestaurants();
+  const [userLocation, setUserLocation] = useState(null);
+  const {
+    data: restaurants,
+    isLoading,
+    error,
+  } = useRestaurants({
+    lat: userLocation?.latitude,
+    lon: userLocation?.longitude,
+    radius: 5, // Set an appropriate radius in km
+  });
 
   const [region, setRegion] = useState({
     latitude: -33.8688,
@@ -74,6 +84,7 @@ export function Map() {
   const [selectedMarkerCoords, setSelectedMarkerCoords] = useState(null);
   const [bottomSheetIndex, setBottomSheetIndex] = useState(-1);
   const [markerAnimation] = useState(new Animated.Value(0));
+  const [errorMsg, setErrorMsg] = useState(null);
 
   const snapPoints = useMemo(() => ["25%", "50%", "70%"], []);
 
@@ -81,12 +92,22 @@ export function Map() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    setRegion({
-      latitude: -33.8688,
-      longitude: 151.2093,
-      latitudeDelta: 0.0922,
-      longitudeDelta: 0.0421,
-    });
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setUserLocation(location.coords);
+      setRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      });
+    })();
   }, []);
 
   const animateMarker = useCallback(() => {
@@ -245,6 +266,14 @@ export function Map() {
     );
   }
 
+  if (errorMsg) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <Text className="text-lg text-red-500">Error: {errorMsg}</Text>
+      </View>
+    );
+  }
+
   if (!restaurants || restaurants.length === 0) {
     return (
       <View className="flex-1 justify-center items-center">
@@ -280,46 +309,58 @@ export function Map() {
             showsScale={false}
             showsCompass={false}
           >
-            {restaurants.map((location, index) => (
+            {userLocation && (
               <Marker
-                key={location.id}
                 coordinate={{
-                  latitude: Number(location.latitude),
-                  longitude: Number(location.longitude),
+                  latitude: userLocation.latitude,
+                  longitude: userLocation.longitude,
                 }}
-                onPress={() => handleMarkerPress(index)}
-              >
-                {selectedRestaurant && selectedRestaurant.id === location.id ? (
-                  <Animated.View
-                    style={[
-                      styles.selectedMarkerContainer,
-                      {
-                        transform: [
-                          {
-                            scale: markerAnimation.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [1, 1.2],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Image
-                      source={{ uri: location.image }}
-                      style={styles.selectedMarkerImage}
-                    />
-                  </Animated.View>
-                ) : (
-                  <View style={styles.markerContainer}>
-                    <Image
-                      source={{ uri: location.image }}
-                      style={styles.markerImage}
-                    />
-                  </View>
-                )}
-              </Marker>
-            ))}
+                title="You are here"
+                pinColor="blue"
+              />
+            )}
+            {restaurants &&
+              restaurants.map((restaurant, index) => (
+                <Marker
+                  key={restaurant.id}
+                  coordinate={{
+                    latitude: Number(restaurant.latitude),
+                    longitude: Number(restaurant.longitude),
+                  }}
+                  onPress={() => handleMarkerPress(index)}
+                >
+                  {selectedRestaurant &&
+                  selectedRestaurant.id === restaurant.id ? (
+                    <Animated.View
+                      style={[
+                        styles.selectedMarkerContainer,
+                        {
+                          transform: [
+                            {
+                              scale: markerAnimation.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [1, 1.2],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Image
+                        source={{ uri: restaurant.image }}
+                        style={styles.selectedMarkerImage}
+                      />
+                    </Animated.View>
+                  ) : (
+                    <View style={styles.markerContainer}>
+                      <Image
+                        source={{ uri: restaurant.image }}
+                        style={styles.markerImage}
+                      />
+                    </View>
+                  )}
+                </Marker>
+              ))}
           </MapView>
 
           <BottomSheet
