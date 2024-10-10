@@ -244,7 +244,7 @@ export default function SearchScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  className="bg-gray-100 rounded-lg px-4 py-2 flex-1"
+                  className="bg-gray-100 rounded-lg px-4 py-3 flex-1"
                   onPress={() => toggleDropdown("tags")}
                 >
                   <Text className="text-gray-800 text-center">
@@ -254,7 +254,7 @@ export default function SearchScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  className="bg-gray-100 rounded-lg px-4 py-2 flex-1"
+                  className="bg-gray-100 rounded-lg px-4 py-3 flex-1"
                   onPress={() => toggleDropdown("distance")}
                 >
                   <Text className="text-gray-800 text-center">

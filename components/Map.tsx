@@ -81,17 +81,26 @@ export function Map({
   const mapRef = useRef<MapView | null>(null);
   const markerRefs = useRef([]);
   const bottomSheetRef = useRef<BottomSheet>(null);
-  // Comment out the userLocation state
-  // const [userLocation, setUserLocation] = useState(null);
   const {
     data: restaurants,
     isLoading,
     error,
   } = useRestaurants({
-    lat: -33.8688,
-    lon: 151.2093,
-    radius: 5, // Set an appropriate radius in km
+    lat: searchCenter.latitude,
+    lon: searchCenter.longitude,
+    radius: searchRadius, // Use the searchRadius prop
   });
+
+  // Log the restaurants data
+  console.log("Restaurants data:", restaurants);
+  console.log("Search params:", {
+    lat: searchCenter.latitude,
+    lon: searchCenter.longitude,
+    radius: searchRadius,
+  });
+
+  // Comment out the userLocation state
+  // const [userLocation, setUserLocation] = useState(null);
 
   // Set a fixed region for Sydney
   const [region, setRegion] = useState({
@@ -456,7 +465,9 @@ export function Map({
 
           {(!restaurants || restaurants.length === 0) && (
             <View style={styles.overlay}>
-              <Text style={styles.overlayText}>No restaurants found.</Text>
+              <Text style={styles.overlayText}>
+                No restaurants found in this area.
+              </Text>
             </View>
           )}
 
@@ -492,7 +503,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(210, 180, 140, 0.7)", // Tan color with 70% opacity
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -500,6 +511,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#000",
+    textAlign: "center",
+    padding: 20,
   },
   contentContainer: {
     padding: 16,
