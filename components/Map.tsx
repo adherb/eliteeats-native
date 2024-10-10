@@ -61,17 +61,19 @@ export function Map() {
   const mapRef = useRef<MapView | null>(null);
   const markerRefs = useRef([]);
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const [userLocation, setUserLocation] = useState(null);
+  // Comment out the userLocation state
+  // const [userLocation, setUserLocation] = useState(null);
   const {
     data: restaurants,
     isLoading,
     error,
   } = useRestaurants({
-    lat: userLocation?.latitude,
-    lon: userLocation?.longitude,
+    lat: -33.8688,
+    lon: 151.2093,
     radius: 5, // Set an appropriate radius in km
   });
 
+  // Set a fixed region for Sydney
   const [region, setRegion] = useState({
     latitude: -33.8688,
     longitude: 151.2093,
@@ -91,6 +93,8 @@ export function Map() {
   const router = useRouter();
   const colorScheme = useColorScheme();
 
+  // Comment out the useEffect hook that gets the user's location
+  /*
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -109,6 +113,7 @@ export function Map() {
       });
     })();
   }, []);
+  */
 
   const animateMarker = useCallback(() => {
     Animated.spring(markerAnimation, {
@@ -181,11 +186,11 @@ export function Map() {
       />
       <View className="p-4">
         <Text className="text-2xl font-bold mb-2">{item.name}</Text>
-        <Text className="text-gray-600 mb-2">
+        {/* <Text className="text-gray-600 mb-2">
           {item.cuisine && item.cuisine.length > 0
             ? item.cuisine.join(", ")
             : "Cuisine not specified"}
-        </Text>
+        </Text> */}
         <Text className="text-gray-500 text-sm mb-2">{item.address}</Text>
         <View className="flex-row items-center mb-2">
           <Text className="text-yellow-500 font-bold mr-1">
@@ -282,7 +287,7 @@ export function Map() {
           <MapView
             className="flex-1"
             region={region}
-            key={`${region?.latitude}_${region?.longitude}`}
+            key={`${region.latitude}_${region.longitude}`}
             provider={
               Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
             }
@@ -301,16 +306,56 @@ export function Map() {
             showsScale={false}
             showsCompass={false}
           >
-            {userLocation && (
-              <Marker
-                coordinate={{
-                  latitude: userLocation.latitude,
-                  longitude: userLocation.longitude,
-                }}
-                title="You are here"
-                pinColor="red" // Changed from "blue" to "red"
-              />
-            )}
+            {/* Sydney marker */}
+            <Marker
+              coordinate={{
+                latitude: -33.8688,
+                longitude: 151.2093,
+              }}
+              title="Sydney"
+              pinColor="red"
+            />
+
+            {/* Restaurant markers */}
+            {restaurants &&
+              restaurants.map((restaurant, index) => (
+                <Marker
+                  key={restaurant.id}
+                  coordinate={{
+                    latitude: restaurant.latitude,
+                    longitude: restaurant.longitude,
+                  }}
+                  title={restaurant.name}
+                  // description={restaurant.cuisine.join(", ")}
+                  onPress={() => handleMarkerPress(index)}
+                >
+                  <Animated.View
+                    style={[
+                      styles.markerContainer,
+                      selectedMarkerCoords &&
+                      selectedMarkerCoords.latitude === restaurant.latitude &&
+                      selectedMarkerCoords.longitude === restaurant.longitude
+                        ? styles.selectedMarkerContainer
+                        : null,
+                      {
+                        transform: [
+                          {
+                            scale: markerAnimation.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [1, 1.5],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  >
+                    <Image
+                      source={{ uri: restaurant.image }}
+                      style={styles.markerImage}
+                    />
+                  </Animated.View>
+                </Marker>
+              ))}
           </MapView>
 
           {(!restaurants || restaurants.length === 0) && (
