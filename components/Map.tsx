@@ -135,14 +135,29 @@ export function Map() {
         longitude: restaurant.longitude,
       });
 
-      // Calculate new region to position marker in top 25% of screen
+      // Calculate new region to position marker based on current bottom sheet position
       const { width, height } = Dimensions.get("window");
       const ASPECT_RATIO = width / height;
       const LATITUDE_DELTA = 0.02;
       const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
+      let offsetMultiplier;
+      switch (bottomSheetIndex) {
+        case 0: // 25%
+          offsetMultiplier = 0.025;
+          break;
+        case 1: // 50%
+          offsetMultiplier = 0.125;
+          break;
+        case 2: // 70%
+          offsetMultiplier = 0.325;
+          break;
+        default:
+          offsetMultiplier = 0.325; // Default to 70% if sheet is closed
+      }
+
       const newRegion = {
-        latitude: restaurant.latitude - LATITUDE_DELTA * 0.325,
+        latitude: restaurant.latitude - LATITUDE_DELTA * offsetMultiplier,
         longitude: restaurant.longitude,
         latitudeDelta: LATITUDE_DELTA,
         longitudeDelta: LONGITUDE_DELTA,
