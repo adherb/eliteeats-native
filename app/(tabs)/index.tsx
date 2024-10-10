@@ -178,8 +178,7 @@ export default function SearchScreen() {
         console.log("New location:", { lat, lng });
         setLat(lat);
         setLng(lng);
-        setSearchCenter({ lat, lng });
-
+        setSearchCenter({ latitude: lat, longitude: lng }); // Make sure this is correct
         // Update the map region to show a larger area
         mapRef.current?.animateToRegion(
           {

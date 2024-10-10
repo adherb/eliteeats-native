@@ -15,6 +15,13 @@ const useRestaurants = (
   options: UseRestaurantsOptions = {}
 ): UseQueryResult<Restaurant[], Error> => {
   const { lat, lon, radius, cuisines, tags, sortBy, limit } = options;
+  console.log("useRestaurants called with:", {
+    lat,
+    lon,
+    radius,
+    cuisines,
+    tags,
+  });
 
   return useQuery({
     queryKey: ["restaurants", lat, lon, radius, cuisines, tags, sortBy, limit],
