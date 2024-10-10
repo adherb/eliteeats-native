@@ -20,6 +20,7 @@ import {
   ScrollView,
   Dimensions,
   Animated,
+  TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -122,39 +123,42 @@ export function Map() {
     }).start();
   }, [markerAnimation]);
 
-  const handleMarkerPress = (index) => {
-    // Trigger haptic feedback
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const handleMarkerPress = useCallback(
+    (index) => {
+      // Trigger haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const restaurant = restaurants[index];
-    setSelectedRestaurant(restaurant);
-    setSelectedMarkerCoords({
-      latitude: restaurant.latitude,
-      longitude: restaurant.longitude,
-    });
+      const restaurant = restaurants[index];
+      setSelectedRestaurant(restaurant);
+      setSelectedMarkerCoords({
+        latitude: restaurant.latitude,
+        longitude: restaurant.longitude,
+      });
 
-    // Calculate new region to position marker in top 25% of screen
-    const { width, height } = Dimensions.get("window");
-    const ASPECT_RATIO = width / height;
-    const LATITUDE_DELTA = 0.02;
-    const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+      // Calculate new region to position marker in top 25% of screen
+      const { width, height } = Dimensions.get("window");
+      const ASPECT_RATIO = width / height;
+      const LATITUDE_DELTA = 0.02;
+      const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
-    const newRegion = {
-      latitude: restaurant.latitude - LATITUDE_DELTA * 0.325, // Move center point up
-      longitude: restaurant.longitude,
-      latitudeDelta: LATITUDE_DELTA,
-      longitudeDelta: LONGITUDE_DELTA,
-    };
+      const newRegion = {
+        latitude: restaurant.latitude - LATITUDE_DELTA * 0.325,
+        longitude: restaurant.longitude,
+        latitudeDelta: LATITUDE_DELTA,
+        longitudeDelta: LONGITUDE_DELTA,
+      };
 
-    mapRef.current?.animateToRegion(newRegion, 1000);
+      mapRef.current?.animateToRegion(newRegion, 1000);
 
-    // Check if the bottom sheet is already open
-    if (bottomSheetIndex === -1) {
-      bottomSheetRef.current?.snapToIndex(2);
-    }
+      // Always ensure the bottom sheet is open
+      if (bottomSheetIndex === -1) {
+        bottomSheetRef.current?.snapToIndex(2);
+      }
 
-    animateMarker();
-  };
+      animateMarker();
+    },
+    [restaurants, bottomSheetIndex, animateMarker]
+  );
 
   const handleSheetChanges = useCallback(
     (index: number) => {
@@ -249,16 +253,18 @@ export function Map() {
     </View>
   );
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-      />
-    ),
-    []
-  );
+  // const renderBackdrop = useCallback(
+  //   (props: BottomSheetBackdropProps) => (
+  //     <BottomSheetBackdrop
+  //       {...props}
+  //       disappearsOnIndex={-1}
+  //       appearsOnIndex={0}
+  //       opacity={0.5}
+  //       pressBehavior="none" // This allows touches to pass through
+  //     />
+  //   ),
+  //   []
+  // );
 
   if (isLoading) {
     return (
@@ -330,35 +336,35 @@ export function Map() {
                     latitude: restaurant.latitude,
                     longitude: restaurant.longitude,
                   }}
-                  // title={restaurant.name}
-                  // description={restaurant.cuisine.join(", ")}
                   onPress={() => handleMarkerPress(index)}
                 >
-                  <Animated.View
-                    style={[
-                      styles.markerContainer,
-                      selectedMarkerCoords &&
-                      selectedMarkerCoords.latitude === restaurant.latitude &&
-                      selectedMarkerCoords.longitude === restaurant.longitude
-                        ? styles.selectedMarkerContainer
-                        : null,
-                      {
-                        transform: [
-                          {
-                            scale: markerAnimation.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [1, 1.5],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  >
-                    <Image
-                      source={{ uri: restaurant.image }}
-                      style={styles.markerImage}
-                    />
-                  </Animated.View>
+                  <TouchableOpacity onPress={() => handleMarkerPress(index)}>
+                    <Animated.View
+                      style={[
+                        styles.markerContainer,
+                        selectedMarkerCoords &&
+                        selectedMarkerCoords.latitude === restaurant.latitude &&
+                        selectedMarkerCoords.longitude === restaurant.longitude
+                          ? styles.selectedMarkerContainer
+                          : null,
+                        {
+                          transform: [
+                            {
+                              scale: markerAnimation.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [1, 1.5],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Image
+                        source={{ uri: restaurant.image }}
+                        style={styles.markerImage}
+                      />
+                    </Animated.View>
+                  </TouchableOpacity>
                 </Marker>
               ))}
           </MapView>
@@ -375,7 +381,7 @@ export function Map() {
             snapPoints={snapPoints}
             onChange={handleSheetChanges}
             enablePanDownToClose={true}
-            backdropComponent={renderBackdrop}
+            // backdropComponent={renderBackdrop}
           >
             <BottomSheetScrollView
               contentContainerStyle={styles.contentContainer}
