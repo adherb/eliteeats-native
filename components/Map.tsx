@@ -274,14 +274,6 @@ export function Map() {
     );
   }
 
-  if (!restaurants || restaurants.length === 0) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text className="text-lg">No restaurants found.</Text>
-      </View>
-    );
-  }
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -316,52 +308,16 @@ export function Map() {
                   longitude: userLocation.longitude,
                 }}
                 title="You are here"
-                pinColor="blue"
+                pinColor="red" // Changed from "blue" to "red"
               />
             )}
-            {restaurants &&
-              restaurants.map((restaurant, index) => (
-                <Marker
-                  key={restaurant.id}
-                  coordinate={{
-                    latitude: Number(restaurant.latitude),
-                    longitude: Number(restaurant.longitude),
-                  }}
-                  onPress={() => handleMarkerPress(index)}
-                >
-                  {selectedRestaurant &&
-                  selectedRestaurant.id === restaurant.id ? (
-                    <Animated.View
-                      style={[
-                        styles.selectedMarkerContainer,
-                        {
-                          transform: [
-                            {
-                              scale: markerAnimation.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [1, 1.2],
-                              }),
-                            },
-                          ],
-                        },
-                      ]}
-                    >
-                      <Image
-                        source={{ uri: restaurant.image }}
-                        style={styles.selectedMarkerImage}
-                      />
-                    </Animated.View>
-                  ) : (
-                    <View style={styles.markerContainer}>
-                      <Image
-                        source={{ uri: restaurant.image }}
-                        style={styles.markerImage}
-                      />
-                    </View>
-                  )}
-                </Marker>
-              ))}
           </MapView>
+
+          {(!restaurants || restaurants.length === 0) && (
+            <View style={styles.overlay}>
+              <Text style={styles.overlayText}>No restaurants found.</Text>
+            </View>
+          )}
 
           <BottomSheet
             ref={bottomSheetRef}
@@ -394,12 +350,15 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(210, 180, 140, 0.7)", // Tan color with 70% opacity
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  overlayText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#000",
   },
   contentContainer: {
     padding: 16,
