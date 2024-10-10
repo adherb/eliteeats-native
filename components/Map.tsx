@@ -147,7 +147,12 @@ export function Map() {
     };
 
     mapRef.current?.animateToRegion(newRegion, 1000);
-    bottomSheetRef.current?.snapToIndex(2);
+
+    // Check if the bottom sheet is already open
+    if (bottomSheetIndex === -1) {
+      bottomSheetRef.current?.snapToIndex(2);
+    }
+
     animateMarker();
   };
 
@@ -325,7 +330,7 @@ export function Map() {
                     latitude: restaurant.latitude,
                     longitude: restaurant.longitude,
                   }}
-                  title={restaurant.name}
+                  // title={restaurant.name}
                   // description={restaurant.cuisine.join(", ")}
                   onPress={() => handleMarkerPress(index)}
                 >
