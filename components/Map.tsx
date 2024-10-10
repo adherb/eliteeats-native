@@ -21,6 +21,7 @@ import {
   Dimensions,
   Animated,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -362,8 +363,32 @@ export function Map({
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center">
-        <Text className="text-lg">Loading restaurants...</Text>
+      <View style={styles.container}>
+        <MapView
+          className="flex-1"
+          region={region}
+          provider={
+            Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+          }
+          style={styles.map}
+          ref={mapRef}
+          scrollEnabled={true}
+          zoomEnabled={true}
+          rotateEnabled={true}
+          pitchEnabled={true}
+          customMapStyle={customMapStyle}
+          mapType="standard"
+          showsPointsOfInterest={false}
+          showsBuildings={false}
+          showsTraffic={false}
+          showsIndoors={false}
+          showsScale={false}
+          showsCompass={false}
+        />
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#ff0000" />
+          {/* <Text className="text-lg mt-2">Loading restaurants...</Text> */}
+        </View>
       </View>
     );
   }
@@ -465,9 +490,7 @@ export function Map({
 
           {(!restaurants || restaurants.length === 0) && (
             <View style={styles.overlay}>
-              <Text style={styles.overlayText}>
-                No restaurants found in this area.
-              </Text>
+              <Text style={styles.overlayText}>Coming soon!</Text>
             </View>
           )}
 
@@ -503,14 +526,14 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)", // Changed from white to black
     justifyContent: "center",
     alignItems: "center",
   },
   overlayText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#000",
+    color: "#fff", // Changed from "#000" to "#fff" for better visibility
     textAlign: "center",
     padding: 20,
   },
@@ -541,5 +564,15 @@ const styles = StyleSheet.create({
   selectedMarkerImage: {
     width: "100%",
     height: "100%",
+  },
+  loadingOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
   },
 });

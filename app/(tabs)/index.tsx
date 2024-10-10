@@ -230,7 +230,7 @@ export default function SearchScreen() {
         selectedCuisine={selectedCuisine}
         selectedTags={selectedTags}
       />
-      <View className="absolute top-0 left-0 right-0 bg-white pt-20 pb-4 px-4 z-10">
+      <View className="absolute top-0 left-0 right-0 bg-white pt-20 pb-0 px-4 z-10">
         {!showSearch ? (
           <>
             <View className="flex-row justify-between items-center mb-3">
