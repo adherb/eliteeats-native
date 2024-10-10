@@ -64,12 +64,8 @@ interface MapProps {
   searchRadius: number;
   selectedCuisine: string;
   selectedTags: string[];
-  initialRegion: {
-    latitude: number;
-    longitude: number;
-    latitudeDelta: number;
-    longitudeDelta: number;
-  } | null;
+  onRestaurantSelect: (restaurant: Restaurant) => void;
+  distance: number;
 }
 
 export function Map({
@@ -77,7 +73,8 @@ export function Map({
   searchRadius,
   selectedCuisine,
   selectedTags,
-  initialRegion,
+  onRestaurantSelect,
+  distance,
 }: MapProps) {
   const mapRef = useRef<MapView | null>(null);
   const markerRefs = useRef([]);
@@ -89,16 +86,45 @@ export function Map({
   } = useRestaurants({
     lat: searchCenter.latitude,
     lon: searchCenter.longitude,
-    radius: searchRadius, // Use the searchRadius prop
+    radius: distance * 1000,
+    cuisines: selectedCuisine,
+    tags: selectedTags,
   });
 
-  // Log the restaurants data
+  // Add this useEffect to log errors
+  useEffect(() => {
+    if (error) {
+      console.error("Error in useRestaurants:", error);
+    }
+  }, [error]);
+
+  // Log the restaurants data and search params
   console.log("Restaurants data:", restaurants);
   console.log("Search params:", {
     lat: searchCenter.latitude,
     lon: searchCenter.longitude,
-    radius: searchRadius,
+    radius: distance * 1000, // Use distance here instead of searchRadius
+    cuisines: selectedCuisine,
+    tags: selectedTags,
   });
+
+  useEffect(() => {
+    if (mapRef.current && searchCenter) {
+      const latitudeDelta = distance / 111; // Approximate conversion from km to degrees
+      const longitudeDelta =
+        distance / (111 * Math.cos(searchCenter.latitude * (Math.PI / 180)));
+
+      mapRef.current.animateToRegion(
+        {
+          latitude: searchCenter.latitude,
+          longitude: searchCenter.longitude,
+          latitudeDelta: latitudeDelta,
+          longitudeDelta: longitudeDelta,
+        },
+        1000
+      );
+    }
+  }, [searchCenter, distance]);
 
   // Comment out the userLocation state
   // const [userLocation, setUserLocation] = useState(null);
@@ -146,24 +172,21 @@ export function Map({
   */
 
   useEffect(() => {
-    if (initialRegion) {
-      setRegion(initialRegion);
-      mapRef.current?.animateToRegion(initialRegion, 1000);
-    }
-  }, [initialRegion]);
-
-  useEffect(() => {
     if (searchCenter) {
+      const latitudeDelta = distance / 111; // Approximate conversion from km to degrees
+      const longitudeDelta =
+        distance / (111 * Math.cos(searchCenter.latitude * (Math.PI / 180)));
+
       const newRegion = {
         latitude: searchCenter.latitude,
         longitude: searchCenter.longitude,
-        latitudeDelta: 0.1,
-        longitudeDelta: 0.1,
+        latitudeDelta: latitudeDelta,
+        longitudeDelta: longitudeDelta,
       };
       setRegion(newRegion);
       mapRef.current?.animateToRegion(newRegion, 1000);
     }
-  }, [searchCenter]);
+  }, [searchCenter, distance]);
 
   const animateMarker = useCallback(() => {
     Animated.spring(markerAnimation, {
@@ -387,24 +410,7 @@ export function Map({
         />
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#ff0000" />
-          {/* <Text className="text-lg mt-2">Loading restaurants...</Text> */}
         </View>
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text className="text-lg text-red-500">Error: {error.message}</Text>
-      </View>
-    );
-  }
-
-  if (errorMsg) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <Text className="text-lg text-red-500">Error: {errorMsg}</Text>
       </View>
     );
   }
@@ -448,6 +454,7 @@ export function Map({
 
             {/* Restaurant markers */}
             {restaurants &&
+              restaurants.length > 0 &&
               restaurants.map((restaurant, index) => (
                 <Marker
                   key={restaurant.id}
@@ -488,7 +495,7 @@ export function Map({
               ))}
           </MapView>
 
-          {(!restaurants || restaurants.length === 0) && (
+          {(!restaurants || restaurants.length === 0 || error) && (
             <View style={styles.overlay}>
               <Text style={styles.overlayText}>Coming soon!</Text>
             </View>
@@ -526,14 +533,14 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.7)", // Changed from white to black
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
     justifyContent: "center",
     alignItems: "center",
   },
   overlayText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#fff", // Changed from "#000" to "#fff" for better visibility
+    color: "#fff",
     textAlign: "center",
     padding: 20,
   },

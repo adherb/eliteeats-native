@@ -38,7 +38,7 @@ export default function SearchScreen() {
   const [toggleView, setToggleView] = useState(false);
   const [selectedCuisine, setSelectedCuisine] = useState("");
   const [selectedTags, setSelectedTags] = useState([]);
-  const [distance, setDistance] = useState(5);
+  const [distance, setDistance] = useState(5); // Default to 5km
   const [radius, setRadius] = useState(5000); // radius in meters
   const [openCuisine, setOpenCuisine] = useState(false);
   const [openTags, setOpenTags] = useState(false);
@@ -114,9 +114,18 @@ export default function SearchScreen() {
     setOpenDropdown((prev) => (prev === dropdownName ? null : dropdownName));
   }, []);
 
-  const updateMapRadius = useCallback((distanceKm) => {
-    setDistance(distanceKm);
-    setRadius(distanceKm * 1000); // Convert km to meters
+  const [mapKey, setMapKey] = useState(0);
+
+  const updateMapRadius = useCallback((value) => {
+    let newDistance;
+    if (value <= 5) {
+      newDistance = Math.round(value);
+    } else {
+      newDistance = Math.round((value - 5) / 5) * 5 + 5;
+    }
+    setDistance(newDistance);
+    setRadius(newDistance * 1000); // Convert km to meters
+    setMapKey((prevKey) => prevKey + 1);
   }, []);
 
   useEffect(() => {
@@ -127,16 +136,23 @@ export default function SearchScreen() {
   }, []);
 
   const toggleCuisine = (cuisine) => {
-    setSelectedCuisine((prevCuisine) =>
-      prevCuisine === cuisine ? "" : cuisine
-    );
+    const newCuisine = selectedCuisine === cuisine ? "" : cuisine;
+    setSelectedCuisine(newCuisine);
+    setMapKey((prevKey) => prevKey + 1);
   };
 
-  const toggleTag = useCallback((tag) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
-  }, []);
+  const toggleTag = useCallback(
+    (tag) => {
+      setSelectedTags((prev) => {
+        const newTags = prev.includes(tag)
+          ? prev.filter((t) => t !== tag)
+          : [...prev, tag];
+        setMapKey((prevKey) => prevKey + 1);
+        return newTags;
+      });
+    },
+    [radius, selectedCuisine]
+  );
 
   const [searchQuery, setSearchQuery] = useState("");
   const [predictions, setPredictions] = useState([]);
@@ -206,6 +222,40 @@ export default function SearchScreen() {
 
   const [showSearch, setShowSearch] = useState(false);
 
+  const resetAllOptions = useCallback(() => {
+    console.log("Resetting all options");
+    try {
+      setOpenDropdown(null);
+      setShowSearch(false);
+      setSearchQuery("");
+      setPredictions([]);
+      console.log("Options reset successfully");
+    } catch (error) {
+      console.error("Error resetting options:", error);
+    }
+  }, []);
+
+  const handleRestaurantSelect = useCallback(
+    (restaurant) => {
+      console.log("Restaurant selected:", restaurant);
+      // Handle the restaurant selection logic here
+      // For example, you might want to set some state or navigate to a detail page
+
+      // Then reset all options
+      resetAllOptions();
+    },
+    [resetAllOptions]
+  );
+
+  useEffect(() => {
+    console.log("Current state:", {
+      openDropdown,
+      showSearch,
+      searchQuery,
+      predictions: predictions.length,
+    });
+  }, [openDropdown, showSearch, searchQuery, predictions]);
+
   return (
     <>
       <Stack.Screen
@@ -224,11 +274,13 @@ export default function SearchScreen() {
       />
       <StatusBar style="light" />
       <Map
-        ref={mapRef}
+        key={mapKey}
         searchCenter={searchCenter}
         searchRadius={radius}
         selectedCuisine={selectedCuisine}
         selectedTags={selectedTags}
+        onRestaurantSelect={handleRestaurantSelect}
+        distance={distance} // Add this line
       />
       <View className="absolute top-0 left-0 right-0 bg-white pt-20 pb-0 px-4 z-10">
         {!showSearch ? (
@@ -308,7 +360,7 @@ export default function SearchScreen() {
                   minimumValue={1}
                   maximumValue={50}
                   step={1}
-                  value={distance}
+                  value={distance <= 5 ? distance : (distance - 5) / 5 + 5}
                   onValueChange={updateMapRadius}
                   minimumTrackTintColor="#FF0000"
                   maximumTrackTintColor="#000000"
