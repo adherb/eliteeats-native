@@ -16,9 +16,9 @@ import clsx from "clsx";
 import { StatusBar } from "expo-status-bar";
 import * as Location from "expo-location";
 import * as DropdownMenu from "zeego/dropdown-menu";
-import Slider from "@react-native-community/slider"; // You may need to install this package
+import Slider from "@react-native-community/slider";
 
-const API_KEY = "AIzaSyCsMzFJLCN29so4FXcCtbbcoiHjRw9cggU";
+const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 const Badge = ({ label, isSelected, onPress }) => (
   <Pressable
@@ -111,7 +111,6 @@ export default function SearchScreen() {
   }, []);
 
   const toggleDropdown = useCallback((dropdownName) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setOpenDropdown((prev) => (prev === dropdownName ? null : dropdownName));
   }, []);
 
@@ -193,6 +192,7 @@ export default function SearchScreen() {
         // Clear the search query and predictions to close the flyout
         setSearchQuery("");
         setPredictions([]);
+        setShowSearch(false); // Hide the search input
       }
     } catch (error) {
       console.error("Error fetching place details:", error);
@@ -203,6 +203,8 @@ export default function SearchScreen() {
     latitude: -33.8688,
     longitude: 151.2093,
   });
+
+  const [showSearch, setShowSearch] = useState(false);
 
   return (
     <>
@@ -229,24 +231,113 @@ export default function SearchScreen() {
         selectedTags={selectedTags}
       />
       <View className="absolute top-0 left-0 right-0 bg-white pt-20 pb-4 px-4 z-10">
-        <View className="mb-3 flex-row items-center bg-gray-100 rounded-lg px-4 py-2">
-          <Ionicons
-            name="search"
-            size={20}
-            color="gray"
-            style={{ marginRight: 8 }}
-          />
-          <TextInput
-            className="flex-1"
-            placeholder="Search locations"
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
+        {!showSearch ? (
+          <>
+            <View className="flex-row justify-between items-center mb-3">
+              <View className="flex-row gap-2 flex-1">
+                <Pressable
+                  className="bg-gray-100 rounded-lg px-4 py-3 flex-1"
+                  onPress={() => toggleDropdown("cuisine")}
+                >
+                  <Text className="text-gray-800 text-center">
+                    {selectedCuisine || "Cuisine"}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  className="bg-gray-100 rounded-lg px-4 py-2 flex-1"
+                  onPress={() => toggleDropdown("tags")}
+                >
+                  <Text className="text-gray-800 text-center">
+                    {selectedTags.length > 0
+                      ? `${selectedTags.length} selected`
+                      : "Tags"}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  className="bg-gray-100 rounded-lg px-4 py-2 flex-1"
+                  onPress={() => toggleDropdown("distance")}
+                >
+                  <Text className="text-gray-800 text-center">
+                    {distance}km
+                  </Text>
+                </Pressable>
+              </View>
+              <Pressable
+                className="bg-gray-100 rounded-lg p-2 ml-2"
+                onPress={() => setShowSearch(true)}
+              >
+                <Ionicons name="search" size={24} color="gray" />
+              </Pressable>
+            </View>
+            {openDropdown === "cuisine" && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                className="mb-3"
+              >
+                {cuisines.map((cuisine) => (
+                  <Badge
+                    key={cuisine}
+                    label={cuisine}
+                    isSelected={selectedCuisine === cuisine}
+                    onPress={() => toggleCuisine(cuisine)}
+                  />
+                ))}
+              </ScrollView>
+            )}
+            {openDropdown === "tags" && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                className="mb-3"
+              >
+                {tags.map((tag) => (
+                  <Badge
+                    key={tag}
+                    label={tag}
+                    isSelected={selectedTags.includes(tag)}
+                    onPress={() => toggleTag(tag)}
+                  />
+                ))}
+              </ScrollView>
+            )}
+            {openDropdown === "distance" && (
+              <View className="mb-3">
+                <Slider
+                  style={{ width: "100%", height: 40 }}
+                  minimumValue={1}
+                  maximumValue={50}
+                  step={1}
+                  value={distance}
+                  onValueChange={updateMapRadius}
+                  minimumTrackTintColor="#FF0000"
+                  maximumTrackTintColor="#000000"
+                  thumbTintColor="#FF0000"
+                />
+                <Text className="text-center">{distance} km</Text>
+              </View>
+            )}
+          </>
+        ) : (
+          <View>
+            <View className="mb-3 flex-row items-center bg-gray-100 rounded-lg px-4 py-2">
+              <TextInput
+                className="flex-1"
+                placeholder="Search locations"
+                value={searchQuery}
+                onChangeText={handleSearch}
+                autoFocus
+              />
+              <Pressable onPress={() => setShowSearch(false)}>
+                <Ionicons name="close" size={24} color="gray" />
+              </Pressable>
+            </View>
+          </View>
+        )}
 
         {/* Add this section to display predictions */}
-        {predictions.length > 0 && (
-          <View className="rounded-lg shadow-md bg-wjite">
+        {showSearch && predictions.length > 0 && (
+          <View className="bg-white">
             {predictions.map((prediction) => (
               <Pressable
                 key={prediction.place_id}
@@ -256,86 +347,6 @@ export default function SearchScreen() {
                 <Text>{prediction.description}</Text>
               </Pressable>
             ))}
-          </View>
-        )}
-
-        <View className="flex-row justify-between gap-2 mb-3">
-          <Pressable
-            className="bg-gray-100 rounded-lg px-0 py-2 flex-1"
-            onPress={() => toggleDropdown("cuisine")}
-          >
-            <Text className="text-gray-800 text-center">
-              {selectedCuisine || "Cuisine"}
-            </Text>
-          </Pressable>
-          <Pressable
-            className="bg-gray-100 rounded-lg px-0 py-2 flex-1"
-            onPress={() => toggleDropdown("tags")}
-          >
-            <Text className="text-gray-800 text-center">
-              {selectedTags.length > 0
-                ? `${selectedTags.length} selected`
-                : "Tags"}
-            </Text>
-          </Pressable>
-          <Pressable
-            className="bg-gray-100 rounded-lg px-0 py-2 flex-1"
-            onPress={() => toggleDropdown("distance")}
-          >
-            <Text className="text-gray-800 text-center">{distance}km</Text>
-          </Pressable>
-        </View>
-
-        {openDropdown === "cuisine" && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="py-2"
-            contentContainerStyle={{ paddingHorizontal: 4 }}
-          >
-            {cuisines.map((cuisine) => (
-              <Badge
-                key={cuisine}
-                label={cuisine}
-                isSelected={selectedCuisine === cuisine}
-                onPress={() => toggleCuisine(cuisine)}
-              />
-            ))}
-          </ScrollView>
-        )}
-
-        {openDropdown === "tags" && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="py-2"
-            contentContainerStyle={{ paddingHorizontal: 4 }}
-          >
-            {tags.map((tag) => (
-              <Badge
-                key={tag}
-                label={tag}
-                isSelected={selectedTags.includes(tag)}
-                onPress={() => toggleTag(tag)}
-              />
-            ))}
-          </ScrollView>
-        )}
-
-        {openDropdown === "distance" && (
-          <View className="flex-row items-center mt-4 px-2">
-            <Text className="mr-4">Distance: {distance}km</Text>
-            <Slider
-              style={{ flex: 1 }}
-              minimumValue={1}
-              maximumValue={50}
-              step={1}
-              value={distance}
-              onValueChange={updateMapRadius}
-              minimumTrackTintColor="#FF0000"
-              maximumTrackTintColor="#000000"
-              thumbTintColor="#FF0000"
-            />
           </View>
         )}
       </View>
