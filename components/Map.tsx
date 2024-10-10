@@ -170,9 +170,40 @@ export function Map() {
         setSelectedMarkerCoords(null);
         setSelectedRestaurant(null);
         markerAnimation.setValue(0); // Reset the animation value
+      } else if (selectedRestaurant) {
+        // Calculate new region based on bottom sheet position
+        const { width, height } = Dimensions.get("window");
+        const ASPECT_RATIO = width / height;
+        const LATITUDE_DELTA = 0.02;
+        const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+
+        let offsetMultiplier;
+        switch (index) {
+          case 0: // 25%
+            offsetMultiplier = 0.025;
+            break;
+          case 1: // 50%
+            offsetMultiplier = 0.125;
+            break;
+          case 2: // 70%
+            offsetMultiplier = 0.325;
+            break;
+          default:
+            offsetMultiplier = 0.325;
+        }
+
+        const newRegion = {
+          latitude:
+            selectedRestaurant.latitude - LATITUDE_DELTA * offsetMultiplier,
+          longitude: selectedRestaurant.longitude,
+          latitudeDelta: LATITUDE_DELTA,
+          longitudeDelta: LONGITUDE_DELTA,
+        };
+
+        mapRef.current?.animateToRegion(newRegion, 300);
       }
     },
-    [markerAnimation]
+    [selectedRestaurant, markerAnimation]
   );
 
   const handleBottomSheetLayout = useCallback((event) => {
