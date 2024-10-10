@@ -46,6 +46,7 @@
     "react-hook-form": "^7.53.0",
     "react-native": "0.74.5",
     "react-native-gesture-handler": "~2.16.1",
+    "react-native-google-places-autocomplete": "^2.5.7",
     "react-native-ios-context-menu": "^2.5.1",
     "react-native-ios-utilities": "^4.5.0",
     "react-native-maps": "^1.18.0",

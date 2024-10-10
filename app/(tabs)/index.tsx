@@ -7,6 +7,7 @@ import {
   Animated,
   LayoutAnimation,
   ScrollView,
+  TextInput,
 } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Map } from "@/components/Map";
@@ -16,6 +17,8 @@ import { StatusBar } from "expo-status-bar";
 import * as Location from "expo-location";
 import * as DropdownMenu from "zeego/dropdown-menu";
 import Slider from "@react-native-community/slider"; // You may need to install this package
+
+const API_KEY = "AIzaSyCsMzFJLCN29so4FXcCtbbcoiHjRw9cggU";
 
 const Badge = ({ label, isSelected, onPress }) => (
   <Pressable
@@ -136,6 +139,72 @@ export default function SearchScreen() {
     );
   }, []);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [predictions, setPredictions] = useState([]);
+
+  const handleSearch = async (text) => {
+    console.log("Search query:", text);
+    setSearchQuery(text);
+    if (text.length > 1) {
+      try {
+        const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${text}&key=${API_KEY}`;
+        console.log("Fetching predictions from:", url);
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log("Predictions response:", data);
+        setPredictions(data.predictions);
+      } catch (error) {
+        console.error("Error fetching predictions:", error);
+      }
+    } else {
+      setPredictions([]);
+    }
+  };
+
+  const handleSelectPlace = async (placeId) => {
+    console.log("Selected place ID:", placeId);
+    try {
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${API_KEY}`;
+      console.log("Fetching place details from:", url);
+      const response = await fetch(url);
+      const data = await response.json();
+      console.log("Place details response:", data);
+      if (
+        data.result &&
+        data.result.geometry &&
+        data.result.geometry.location
+      ) {
+        const { lat, lng } = data.result.geometry.location;
+        console.log("New location:", { lat, lng });
+        setLat(lat);
+        setLng(lng);
+        setSearchCenter({ lat, lng });
+
+        // Update the map region to show a larger area
+        mapRef.current?.animateToRegion(
+          {
+            latitude: lat,
+            longitude: lng,
+            latitudeDelta: 0.1, // Increase this value to zoom out more
+            longitudeDelta: 0.1, // Increase this value to zoom out more
+          },
+          1000
+        );
+
+        // Clear the search query and predictions to close the flyout
+        setSearchQuery("");
+        setPredictions([]);
+      }
+    } catch (error) {
+      console.error("Error fetching place details:", error);
+    }
+  };
+
+  const [searchCenter, setSearchCenter] = useState({
+    latitude: -33.8688,
+    longitude: 151.2093,
+  });
+
   return (
     <>
       <Stack.Screen
@@ -153,9 +222,44 @@ export default function SearchScreen() {
         }}
       />
       <StatusBar style="light" />
-      <Map ref={mapRef} radius={radius} latitude={lat} longitude={lng} />
-
+      <Map
+        ref={mapRef}
+        searchCenter={searchCenter}
+        searchRadius={radius}
+        selectedCuisine={selectedCuisine}
+        selectedTags={selectedTags}
+      />
       <View className="absolute top-0 left-0 right-0 bg-white pt-20 pb-4 px-4 z-10">
+        <View className="mb-3 flex-row items-center bg-gray-100 rounded-lg px-4 py-2">
+          <Ionicons
+            name="search"
+            size={20}
+            color="gray"
+            style={{ marginRight: 8 }}
+          />
+          <TextInput
+            className="flex-1"
+            placeholder="Search locations"
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+        </View>
+
+        {/* Add this section to display predictions */}
+        {predictions.length > 0 && (
+          <View className="rounded-lg shadow-md bg-wjite">
+            {predictions.map((prediction) => (
+              <Pressable
+                key={prediction.place_id}
+                className="p-3 border-b border-gray-100"
+                onPress={() => handleSelectPlace(prediction.place_id)}
+              >
+                <Text>{prediction.description}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+
         <View className="flex-row justify-between gap-2 mb-3">
           <Pressable
             className="bg-gray-100 rounded-lg px-0 py-2 flex-1"
