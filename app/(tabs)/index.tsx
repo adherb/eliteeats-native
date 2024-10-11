@@ -17,6 +17,8 @@ import { StatusBar } from "expo-status-bar";
 import * as Location from "expo-location";
 import * as DropdownMenu from "zeego/dropdown-menu";
 import Slider from "@react-native-community/slider";
+import { useCuisines, useTags } from "@/lib/data";
+import { useDebouncedCallback } from "use-debounce";
 
 const API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -24,7 +26,7 @@ const Badge = ({ label, isSelected, onPress }) => (
   <Pressable
     onPress={onPress}
     className={`px-4 py-2 mr-3 my-1 rounded-full ${
-      isSelected ? "bg-red-500" : "bg-gray-200"
+      isSelected ? "bg-[#FF0000]" : "bg-gray-200"
     }`}
   >
     <Text className={`text-sm ${isSelected ? "text-white" : "text-gray-700"}`}>
@@ -44,15 +46,6 @@ export default function SearchScreen() {
   const [openTags, setOpenTags] = useState(false);
   const [openDistance, setOpenDistance] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
-  const cuisines = ["Cafes", "Japanese", "Italian", "Fast Food", "Chinese"];
-  const tags = [
-    "Vegetarian",
-    "Vegan",
-    "Gluten-Free",
-    "Halal",
-    "Kosher",
-    "Fine Dining",
-  ];
   const distances = [1, 5, 10, 20, 50];
 
   const headerTitleColour = "black";
@@ -116,17 +109,28 @@ export default function SearchScreen() {
 
   const [mapKey, setMapKey] = useState(0);
 
-  const updateMapRadius = useCallback((value) => {
-    let newDistance;
-    if (value <= 5) {
-      newDistance = Math.round(value);
-    } else {
-      newDistance = Math.round((value - 5) / 5) * 5 + 5;
-    }
-    setDistance(newDistance);
-    setRadius(newDistance * 1000); // Convert km to meters
-    setMapKey((prevKey) => prevKey + 1);
-  }, []);
+  const debouncedUpdateMap = useDebouncedCallback(
+    (newRadius) => {
+      setRadius(newRadius);
+      setMapKey((prevKey) => prevKey + 1);
+    },
+    300 // 300ms delay
+  );
+
+  const updateMapRadius = useCallback(
+    (value) => {
+      let newDistance;
+      if (value <= 5) {
+        newDistance = Math.round(value);
+      } else {
+        newDistance = Math.round((value - 5) / 5) * 5 + 5;
+      }
+      setDistance(newDistance);
+      const newRadius = newDistance * 1000; // Convert km to meters
+      debouncedUpdateMap(newRadius);
+    },
+    [debouncedUpdateMap]
+  );
 
   useEffect(() => {
     // Initial map setup
@@ -256,6 +260,10 @@ export default function SearchScreen() {
     });
   }, [openDropdown, showSearch, searchQuery, predictions]);
 
+  // Replace the static cuisines and tags arrays with the hooks
+  const { data: cuisines = [], isLoading: isCuisinesLoading } = useCuisines();
+  const { data: tags = [], isLoading: isTagsLoading } = useTags();
+
   return (
     <>
       <Stack.Screen
@@ -280,7 +288,7 @@ export default function SearchScreen() {
         selectedCuisine={selectedCuisine}
         selectedTags={selectedTags}
         onRestaurantSelect={handleRestaurantSelect}
-        distance={distance} // Add this line
+        distance={distance}
       />
       <View className="absolute top-0 left-0 right-0 bg-white pt-20 pb-0 px-4 z-10">
         {!showSearch ? (
@@ -327,14 +335,18 @@ export default function SearchScreen() {
                 showsHorizontalScrollIndicator={false}
                 className="mb-3"
               >
-                {cuisines.map((cuisine) => (
-                  <Badge
-                    key={cuisine}
-                    label={cuisine}
-                    isSelected={selectedCuisine === cuisine}
-                    onPress={() => toggleCuisine(cuisine)}
-                  />
-                ))}
+                {isCuisinesLoading ? (
+                  <Text>Loading cuisines...</Text>
+                ) : (
+                  cuisines.map((cuisine) => (
+                    <Badge
+                      key={cuisine}
+                      label={cuisine}
+                      isSelected={selectedCuisine === cuisine}
+                      onPress={() => toggleCuisine(cuisine)}
+                    />
+                  ))
+                )}
               </ScrollView>
             )}
             {openDropdown === "tags" && (
@@ -343,14 +355,18 @@ export default function SearchScreen() {
                 showsHorizontalScrollIndicator={false}
                 className="mb-3"
               >
-                {tags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    label={tag}
-                    isSelected={selectedTags.includes(tag)}
-                    onPress={() => toggleTag(tag)}
-                  />
-                ))}
+                {isTagsLoading ? (
+                  <Text>Loading tags...</Text>
+                ) : (
+                  tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      label={tag}
+                      isSelected={selectedTags.includes(tag)}
+                      onPress={() => toggleTag(tag)}
+                    />
+                  ))
+                )}
               </ScrollView>
             )}
             {openDropdown === "distance" && (

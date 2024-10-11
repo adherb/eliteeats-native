@@ -80,16 +80,29 @@ export function Map({
   const markerRefs = useRef([]);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const {
-    data: restaurants,
+    data: allRestaurants,
     isLoading,
     error,
   } = useRestaurants({
     lat: searchCenter.latitude,
     lon: searchCenter.longitude,
-    radius: distance * 1000,
-    cuisines: selectedCuisine,
-    tags: selectedTags,
+    radius: 50000, // Fixed 50 km radius
   });
+
+  // Filter restaurants based on cuisine, distance, and tags
+  const restaurants = useMemo(() => {
+    if (!allRestaurants) return [];
+    return allRestaurants.filter((restaurant) => {
+      const isWithinDistance = restaurant.distance <= distance;
+      const hasSelectedCuisine = selectedCuisine
+        ? restaurant.cuisine.includes(selectedCuisine)
+        : true;
+      const hasAllTags = selectedTags.every((tag) =>
+        restaurant.tags.includes(tag)
+      );
+      return isWithinDistance && hasSelectedCuisine && hasAllTags;
+    });
+  }, [allRestaurants, distance, selectedCuisine, selectedTags]);
 
   // Add this useEffect to log errors
   useEffect(() => {
@@ -98,14 +111,16 @@ export function Map({
     }
   }, [error]);
 
-  // Log the restaurants data and search params
-  console.log("Restaurants data:", restaurants);
+  // Update the log to show both allRestaurants and filtered restaurants
+  console.log("All restaurants data:", allRestaurants);
+  console.log("Filtered restaurants:", restaurants);
   console.log("Search params:", {
     lat: searchCenter.latitude,
     lon: searchCenter.longitude,
-    radius: distance * 1000, // Use distance here instead of searchRadius
-    cuisines: selectedCuisine,
-    tags: selectedTags,
+    radius: 50000, // Fixed 50 km radius
+    appliedCuisine: selectedCuisine,
+    appliedDistance: distance,
+    appliedTags: selectedTags,
   });
 
   useEffect(() => {
@@ -443,14 +458,14 @@ export function Map({
             showsCompass={false}
           >
             {/* Sydney marker */}
-            <Marker
+            {/* <Marker
               coordinate={{
                 latitude: -33.8688,
                 longitude: 151.2093,
               }}
               title="Sydney"
               pinColor="red"
-            />
+            /> */}
 
             {/* Restaurant markers */}
             {restaurants &&

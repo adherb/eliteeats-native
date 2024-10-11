@@ -1,6 +1,8 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { Restaurant } from "./types";
 
+const API_BASE_URL = "https://eliteeats.io/api";
+
 interface UseRestaurantsOptions {
   lat?: number;
   lon?: number;
@@ -35,7 +37,7 @@ const useRestaurants = (
       if (sortBy) params.append("sortBy", sortBy);
       if (limit) params.append("limit", limit.toString());
 
-      const url = `https://eliteeats.io/api/restaurants?${params.toString()}`;
+      const url = `${API_BASE_URL}/restaurants?${params.toString()}`;
 
       try {
         const response = await fetch(url);
@@ -67,4 +69,58 @@ const useRestaurants = (
   });
 };
 
-export { useRestaurants };
+const useCuisines = (): UseQueryResult<string[], Error> => {
+  return useQuery({
+    queryKey: ["cuisines"],
+    queryFn: async () => {
+      const url = `${API_BASE_URL}/cuisines`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(
+            `API error: ${response.status} ${response.statusText}`
+          );
+        }
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error(
+            `Invalid data format: expected an array, got ${typeof data}`
+          );
+        }
+        return data as string[];
+      } catch (error) {
+        console.error("Error fetching cuisines:", error);
+        throw error;
+      }
+    },
+  });
+};
+
+const useTags = (): UseQueryResult<string[], Error> => {
+  return useQuery({
+    queryKey: ["tags"],
+    queryFn: async () => {
+      const url = `${API_BASE_URL}/tags`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(
+            `API error: ${response.status} ${response.statusText}`
+          );
+        }
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+          throw new Error(
+            `Invalid data format: expected an array, got ${typeof data}`
+          );
+        }
+        return data as string[];
+      } catch (error) {
+        console.error("Error fetching tags:", error);
+        throw error;
+      }
+    },
+  });
+};
+
+export { useRestaurants, useCuisines, useTags };
