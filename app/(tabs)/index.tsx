@@ -419,12 +419,12 @@ export default function SearchScreen() {
         )}
       </View>
 
-      <Pressable
+      {/* <Pressable
         onPress={zoomToUserLocation}
         className="absolute bottom-6 right-6 bg-white rounded-full p-3 shadow-md"
       >
         <Ionicons name="locate" size={24} color="black" />
-      </Pressable>
+      </Pressable> */}
       <StatusBar style="dark" />
     </>
   );

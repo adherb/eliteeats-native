@@ -22,21 +22,18 @@ import {
   Animated,
   TouchableOpacity,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Image } from "expo-image";
-import BottomSheet, {
-  BottomSheetScrollView,
-  BottomSheetBackdrop,
-  BottomSheetBackdropProps,
-} from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useRestaurants } from "../lib/data";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
+import Carousel from "react-native-reanimated-carousel";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
@@ -78,7 +75,6 @@ export function Map({
 }: MapProps) {
   const mapRef = useRef<MapView | null>(null);
   const markerRefs = useRef([]);
-  const bottomSheetRef = useRef<BottomSheet>(null);
   const {
     data: allRestaurants,
     isLoading,
@@ -158,6 +154,8 @@ export function Map({
   const [bottomSheetIndex, setBottomSheetIndex] = useState(-1);
   const [markerAnimation] = useState(new Animated.Value(0));
   const [errorMsg, setErrorMsg] = useState(null);
+  const [focusedRestaurantIndex, setFocusedRestaurantIndex] = useState(null);
+  const carouselRef = useRef(null);
 
   const snapPoints = useMemo(() => ["25%", "50%", "70%"], []);
 
@@ -222,6 +220,10 @@ export function Map({
         longitude: restaurant.longitude,
       });
 
+      // Focus the carousel on the selected restaurant
+      setFocusedRestaurantIndex(index);
+      carouselRef.current?.scrollTo({ index: index, animated: true });
+
       // Calculate new region to position marker based on current bottom sheet position
       const { width, height } = Dimensions.get("window");
       const ASPECT_RATIO = width / height;
@@ -252,152 +254,40 @@ export function Map({
 
       mapRef.current?.animateToRegion(newRegion, 1000);
 
-      // Always ensure the bottom sheet is open
-      if (bottomSheetIndex === -1) {
-        bottomSheetRef.current?.snapToIndex(2);
-      }
-
       animateMarker();
     },
     [restaurants, bottomSheetIndex, animateMarker]
   );
 
-  const handleSheetChanges = useCallback(
-    (index: number) => {
-      console.log("handleSheetChanges", index);
-      setBottomSheetIndex(index);
+  const windowWidth = Dimensions.get("window").width;
+  const cardWidth = windowWidth * 0.7; // Reduced from 0.8 to 0.7
 
-      // Reset selected marker and restaurant when bottom sheet is closed
-      if (index === -1) {
-        setSelectedMarkerCoords(null);
-        setSelectedRestaurant(null);
-        markerAnimation.setValue(0); // Reset the animation value
-      } else if (selectedRestaurant) {
-        // Calculate new region based on bottom sheet position
-        const { width, height } = Dimensions.get("window");
-        const ASPECT_RATIO = width / height;
-        const LATITUDE_DELTA = 0.02;
-        const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
-
-        let offsetMultiplier;
-        switch (index) {
-          case 0: // 25%
-            offsetMultiplier = 0.025;
-            break;
-          case 1: // 50%
-            offsetMultiplier = 0.125;
-            break;
-          case 2: // 70%
-            offsetMultiplier = 0.325;
-            break;
-          default:
-            offsetMultiplier = 0.325;
-        }
-
-        const newRegion = {
-          latitude:
-            selectedRestaurant.latitude - LATITUDE_DELTA * offsetMultiplier,
-          longitude: selectedRestaurant.longitude,
-          latitudeDelta: LATITUDE_DELTA,
-          longitudeDelta: LONGITUDE_DELTA,
-        };
-
-        mapRef.current?.animateToRegion(newRegion, 300);
-      }
-    },
-    [selectedRestaurant, markerAnimation]
-  );
-
-  const handleBottomSheetLayout = useCallback((event) => {
-    const { height } = event.nativeEvent.layout;
-    setBottomSheetHeight(height);
-  }, []);
-
-  const renderRestaurantCard = (item) => (
-    <View className="bg-white rounded-lg overflow-hidden mb-5 shadow-md">
-      <Image
-        source={{ uri: item.image }}
-        style={{
-          width: "100%",
-          height: 192,
-          objectFit: "cover",
-        }}
-        placeholder={blurhash}
-        contentFit="cover"
-        transition={1000}
-      />
-      <View className="p-4">
-        <Text className="text-2xl font-bold mb-2">{item.name}</Text>
-        {/* <Text className="text-gray-600 mb-2">
-          {item.cuisine && item.cuisine.length > 0
-            ? item.cuisine.join(", ")
-            : "Cuisine not specified"}
-        </Text> */}
-        <Text className="text-gray-500 text-sm mb-2">{item.address}</Text>
-        <View className="flex-row items-center mb-2">
-          <Text className="text-yellow-500 font-bold mr-1">
-            ★ {item.reviews[0].rating}
+  const renderRestaurantCard = ({ item, index }) => (
+    <View style={[styles.cardContainer, { width: cardWidth - 20 }]}>
+      <View style={styles.card}>
+        <Image
+          source={{ uri: item.image }}
+          style={styles.cardImage}
+          placeholder={blurhash}
+          contentFit="cover"
+          transition={1000}
+        />
+        <View style={styles.cardContent}>
+          <Text style={styles.cardTitle}>{item.name}</Text>
+          <Text style={styles.cardSubtitle}>
+            {item.cuisine && item.cuisine.length > 0
+              ? item.cuisine.join(", ")
+              : "Cuisine not specified"}
           </Text>
-          <Text className="text-gray-600 text-sm">
-            ({item.reviews.length} reviews)
+          <Text style={styles.cardDistance}>
+            {typeof item.distance === "number"
+              ? `${item.distance.toFixed(2)} km away`
+              : "Distance unknown"}
           </Text>
-        </View>
-        <Text className="text-gray-700 mb-2">
-          {item.price_rating} •{" "}
-          {typeof item.distance === "number"
-            ? `${item.distance.toFixed(2)} km away`
-            : "Distance unknown"}{" "}
-          • {item.average_prep_time || "Prep time unknown"}
-        </Text>
-        <Text className="text-gray-600 mb-3">
-          Open: {item.opens_at} - {item.closes_at}
-        </Text>
-        <View className="flex-row flex-wrap mb-4">
-          {item.tags.map((tag, index) => (
-            <View
-              key={index}
-              className="bg-gray-200 rounded-full px-3 py-1 mr-2 mb-2"
-            >
-              <Text className="text-sm text-gray-700">{tag}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Reviews Section */}
-        <View className="mt-4">
-          <Text className="text-xl font-semibold mb-2">Recent Reviews</Text>
-          {item.reviews.map((review) => (
-            <View
-              key={review.id}
-              className="mb-3 pb-3 border-b border-gray-200"
-            >
-              <View className="flex-row justify-between items-center mb-1">
-                <Text className="font-medium">{review.author}</Text>
-                <View className="flex-row items-center">
-                  <Text className="text-yellow-500 mr-1">★</Text>
-                  <Text>{review.rating}</Text>
-                </View>
-              </View>
-              <Text className="text-gray-600">{review.text}</Text>
-            </View>
-          ))}
         </View>
       </View>
     </View>
   );
-
-  // const renderBackdrop = useCallback(
-  //   (props: BottomSheetBackdropProps) => (
-  //     <BottomSheetBackdrop
-  //       {...props}
-  //       disappearsOnIndex={-1}
-  //       appearsOnIndex={0}
-  //       opacity={0.5}
-  //       pressBehavior="none" // This allows touches to pass through
-  //     />
-  //   ),
-  //   []
-  // );
 
   if (isLoading) {
     return (
@@ -479,7 +369,7 @@ export function Map({
                   }}
                   onPress={() => handleMarkerPress(index)}
                 >
-                  <TouchableOpacity onPress={() => handleMarkerPress(index)}>
+                  <Pressable onPress={() => handleMarkerPress(index)}>
                     <Animated.View
                       style={[
                         styles.markerContainer,
@@ -505,7 +395,7 @@ export function Map({
                         style={styles.markerImage}
                       />
                     </Animated.View>
-                  </TouchableOpacity>
+                  </Pressable>
                 </Marker>
               ))}
           </MapView>
@@ -516,20 +406,49 @@ export function Map({
             </View>
           )}
 
-          <BottomSheet
-            ref={bottomSheetRef}
-            index={-1}
-            snapPoints={snapPoints}
-            onChange={handleSheetChanges}
-            enablePanDownToClose={true}
-            // backdropComponent={renderBackdrop}
-          >
-            <BottomSheetScrollView
-              contentContainerStyle={styles.contentContainer}
-            >
-              {selectedRestaurant && renderRestaurantCard(selectedRestaurant)}
-            </BottomSheetScrollView>
-          </BottomSheet>
+          {/* Carousel with visible adjacent cards */}
+          <View className="" style={styles.carouselContainer}>
+            <Carousel
+              style={{ width: "100%" }}
+              ref={carouselRef}
+              data={restaurants}
+              renderItem={renderRestaurantCard}
+              width={cardWidth}
+              height={220}
+              mode="parallax"
+              modeConfig={{
+                parallaxScrollingScale: 0.9,
+                parallaxScrollingOffset: 50,
+              }}
+              loop
+              defaultIndex={0}
+              snapEnabled
+              scrollAnimationDuration={1000}
+              // itemSnapToAlignment="center"
+              // inactiveSlideScale={0.9}
+              // inactiveSlideOpacity={0.7}
+              // sliderWidth={windowWidth}
+              // itemWidth={cardWidth}
+              // slideStyle={{ display: "flex", alignItems: "center" }}
+              onSnapToItem={(index) => {
+                const restaurant = restaurants[index];
+                setSelectedRestaurant(restaurant);
+                setSelectedMarkerCoords({
+                  latitude: restaurant.latitude,
+                  longitude: restaurant.longitude,
+                });
+                mapRef.current?.animateToRegion(
+                  {
+                    latitude: restaurant.latitude,
+                    longitude: restaurant.longitude,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                  },
+                  1000
+                );
+              }}
+            />
+          </View>
         </View>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -596,5 +515,61 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(255, 255, 255, 0.7)",
+  },
+  carouselContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    // backgroundColor: "red",
+    paddingBottom: 0,
+    marginBottom: 0,
+    // height: 250,
+  },
+  carousel: {
+    flex: 1,
+    // width: "10%",
+  },
+  cardContainer: {
+    height: 220,
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 10, // Add horizontal margin
+  },
+  card: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "white",
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    overflow: "hidden",
+  },
+  cardImage: {
+    width: "100%",
+    height: 120,
+  },
+  cardContent: {
+    padding: 10,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 5,
+  },
+  cardDistance: {
+    fontSize: 12,
+    color: "#999",
   },
 });
