@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Pressable, ScrollView } from "react-native";
-import { useLocalSearchParams, useRouter, Link } from "expo-router";
+import React from "react";
+import { View, Text, ScrollView } from "react-native";
+import { useLocalSearchParams, Link } from "expo-router";
 import { Image } from "expo-image";
+import { useRestaurant } from "../../lib/data";
 
 interface Restaurant {
   id: string;
@@ -14,21 +15,7 @@ interface Restaurant {
 
 const RestaurantPage = () => {
   const { id } = useLocalSearchParams();
-  const router = useRouter();
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-
-  useEffect(() => {
-    // Mock data - replace this with actual data fetching logic
-    const fetchedRestaurant: Restaurant = {
-      id: "1",
-      name: "Sample Restaurant",
-      cuisine: "Italian",
-      rating: 4.5,
-      image: "https://example.com/sample-restaurant.jpg",
-      description: "A cozy Italian restaurant with authentic cuisine.",
-    };
-    setRestaurant(fetchedRestaurant);
-  }, [id]);
+  const { data: restaurant, isLoading, error } = useRestaurant(id as string);
 
   const renderRestaurantCard = (item: Restaurant) => (
     <View className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -52,12 +39,18 @@ const RestaurantPage = () => {
       <Link href="/restaurants" className="mb-4">
         <Text className="text-blue-500 text-lg">← Back to all restaurants</Text>
       </Link>
-      {restaurant ? (
-        renderRestaurantCard(restaurant)
-      ) : (
+      {isLoading ? (
         <Text className="text-center text-lg">
           Loading restaurant details...
         </Text>
+      ) : error ? (
+        <Text className="text-center text-lg text-red-500">
+          Error: {error.message}
+        </Text>
+      ) : restaurant ? (
+        renderRestaurantCard(restaurant)
+      ) : (
+        <Text className="text-center text-lg">No restaurant data found</Text>
       )}
     </ScrollView>
   );
