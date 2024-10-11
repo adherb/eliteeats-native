@@ -206,7 +206,7 @@ export default function SearchScreen() {
             latitudeDelta: 0.1, // Increase this value to zoom out more
             longitudeDelta: 0.1, // Increase this value to zoom out more
           },
-          1000
+          100
         );
 
         // Clear the search query and predictions to close the flyout
@@ -280,7 +280,6 @@ export default function SearchScreen() {
           },
         }}
       />
-      <StatusBar style="light" />
       <Map
         key={mapKey}
         searchCenter={searchCenter}

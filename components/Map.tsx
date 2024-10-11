@@ -1,14 +1,7 @@
-import React, {
-  forwardRef,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useEffect } from "react";
 import MapView, {
   Marker,
-  Callout,
   PROVIDER_GOOGLE,
   PROVIDER_DEFAULT,
 } from "react-native-maps";
@@ -17,16 +10,12 @@ import {
   Text,
   StyleSheet,
   Platform,
-  ScrollView,
   Dimensions,
   Animated,
-  TouchableOpacity,
   ActivityIndicator,
   Pressable,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -34,6 +23,9 @@ import { useRestaurants } from "../lib/data";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import Carousel from "react-native-reanimated-carousel";
+import { useSharedValue } from "react-native-reanimated";
+import { useWindowDimensions } from "react-native";
+import { Link } from "expo-router";
 
 const blurhash =
   "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[";
@@ -67,10 +59,8 @@ interface MapProps {
 
 export function Map({
   searchCenter,
-  searchRadius,
   selectedCuisine,
   selectedTags,
-  onRestaurantSelect,
   distance,
 }: MapProps) {
   const mapRef = useRef<MapView | null>(null);
@@ -149,18 +139,10 @@ export function Map({
   });
 
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
-  const [bottomSheetHeight, setBottomSheetHeight] = useState(0);
   const [selectedMarkerCoords, setSelectedMarkerCoords] = useState(null);
   const [bottomSheetIndex, setBottomSheetIndex] = useState(-1);
-  const [markerAnimation] = useState(new Animated.Value(0));
-  const [errorMsg, setErrorMsg] = useState(null);
   const [focusedRestaurantIndex, setFocusedRestaurantIndex] = useState(null);
   const carouselRef = useRef(null);
-
-  const snapPoints = useMemo(() => ["25%", "50%", "70%"], []);
-
-  const router = useRouter();
-  const colorScheme = useColorScheme();
 
   // Comment out the useEffect hook that gets the user's location
   /*
@@ -201,13 +183,6 @@ export function Map({
     }
   }, [searchCenter, distance]);
 
-  const animateMarker = useCallback(() => {
-    Animated.spring(markerAnimation, {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start();
-  }, [markerAnimation]);
-
   const handleMarkerPress = useCallback(
     (index) => {
       // Trigger haptic feedback
@@ -222,61 +197,116 @@ export function Map({
 
       // Focus the carousel on the selected restaurant
       setFocusedRestaurantIndex(index);
+      carouselRef.current?.scrollTo({ index: index, animated: true });
 
-      // Combine map and carousel animations
+      // Calculate new region to position marker based on current bottom sheet position
       const { width, height } = Dimensions.get("window");
       const ASPECT_RATIO = width / height;
       const LATITUDE_DELTA = 0.02;
       const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
       const newRegion = {
-        latitude: restaurant.latitude - LATITUDE_DELTA * 0.1, // Slight offset to account for the bottom sheet
+        latitude: restaurant.latitude,
         longitude: restaurant.longitude,
-        latitudeDelta: LATITUDE_DELTA,
-        longitudeDelta: LONGITUDE_DELTA,
+        // latitudeDelta: LATITUDE_DELTA,
+        // longitudeDelta: LONGITUDE_DELTA,
       };
 
-      // Animate map and carousel simultaneously
-      mapRef.current?.animateToRegion(newRegion, 500);
-      carouselRef.current?.scrollTo({ index: index, animated: true });
-
-      // Delay the marker animation slightly
-      setTimeout(() => {
-        animateMarker();
-      }, 100);
+      mapRef.current?.animateToRegion(newRegion, 1000);
     },
-    [restaurants, animateMarker]
+    [restaurants, bottomSheetIndex]
   );
 
-  const windowWidth = Dimensions.get("window").width;
-  const cardWidth = windowWidth * 0.7; // Reduced from 0.8 to 0.7
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const cardWidth = windowWidth * 0.75; // 75% of screen width
+  const cardHeight = 220; // We'll make this dynamic
+
+  // Create a shared value for the default scroll offset
+  const defaultScrollOffset = useSharedValue(cardWidth * 0.125);
+
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${minutes} ${ampm}`;
+  };
 
   const renderRestaurantCard = ({ item, index }) => (
-    <View style={[styles.cardContainer, { width: cardWidth - 20 }]}>
-      <View style={styles.card}>
-        <Image
-          source={{ uri: item.image }}
-          style={styles.cardImage}
-          placeholder={blurhash}
-          contentFit="cover"
-          transition={1000}
-        />
-        <View style={styles.cardContent}>
-          <Text style={styles.cardTitle}>{item.name}</Text>
-          <Text style={styles.cardSubtitle}>
-            {item.cuisine && item.cuisine.length > 0
-              ? item.cuisine.join(", ")
-              : "Cuisine not specified"}
-          </Text>
-          <Text style={styles.cardDistance}>
-            {typeof item.distance === "number"
-              ? `${item.distance.toFixed(2)} km away`
-              : "Distance unknown"}
-          </Text>
+    <Link href={`/restaurants/${item.id}`} asChild>
+      <Pressable>
+        <View
+          style={{ width: cardWidth, height: cardHeight }}
+          className="justify-center items-center shadow-md"
+        >
+          <View className="w-full h-full bg-white rounded-lg overflow-hidden">
+            <Image
+              source={{ uri: item.image }}
+              style={{ width: "100%", height: cardHeight * 0.5 }}
+              placeholder={blurhash}
+              contentFit="cover"
+              transition={1000}
+            />
+            <View className="p-3 flex-1">
+              <View className="flex-row justify-between items-center mb-2">
+                <Text
+                  className="text-base font-bold flex-1"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {item.name}
+                </Text>
+                <Text className="text-xs text-yellow-500 ml-2">
+                  {"★".repeat(Math.round(averageRating(item.reviews)))}
+                  <Text className="text-gray-400">
+                    {" "}
+                    ({averageRating(item.reviews).toFixed(1)})
+                  </Text>
+                </Text>
+              </View>
+              <View className="flex-row flex-wrap mb-2">
+                {item.cuisine && item.cuisine.length > 0 ? (
+                  item.cuisine.map((cuisine, idx) => (
+                    <View
+                      key={idx}
+                      className="bg-gray-200 rounded-full px-2 py-1 mr-1 mb-1"
+                    >
+                      <Text className="text-xs text-gray-700">{cuisine}</Text>
+                    </View>
+                  ))
+                ) : (
+                  <View className="bg-gray-200 rounded-full px-2 py-1">
+                    <Text className="text-xs text-gray-700">
+                      Cuisine not specified
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <View className="flex-row justify-between items-center">
+                <Text className="text-xs text-gray-400">
+                  {item.opens_at && item.closes_at
+                    ? `${formatTime(item.opens_at)} - ${formatTime(
+                        item.closes_at
+                      )}`
+                    : "Hours not available"}
+                </Text>
+                <Text className="text-xs font-semibold">
+                  {item.price_rating || "Price N/A"}
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
-      </View>
-    </View>
+      </Pressable>
+    </Link>
   );
+
+  // Helper function to calculate average rating
+  const averageRating = (reviews) => {
+    if (!reviews || reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return sum / reviews.length;
+  };
 
   if (isLoading) {
     return (
@@ -313,7 +343,7 @@ export function Map({
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar style="dark" />
-        <View style={styles.container}>
+        <View className="flex-1">
           <MapView
             className="flex-1"
             region={region}
@@ -336,16 +366,6 @@ export function Map({
             showsScale={false}
             showsCompass={false}
           >
-            {/* Sydney marker */}
-            {/* <Marker
-              coordinate={{
-                latitude: -33.8688,
-                longitude: 151.2093,
-              }}
-              title="Sydney"
-              pinColor="red"
-            /> */}
-
             {/* Restaurant markers */}
             {restaurants &&
               restaurants.length > 0 &&
@@ -359,7 +379,7 @@ export function Map({
                   onPress={() => handleMarkerPress(index)}
                 >
                   <Pressable onPress={() => handleMarkerPress(index)}>
-                    <Animated.View
+                    <View
                       style={[
                         styles.markerContainer,
                         selectedMarkerCoords &&
@@ -367,23 +387,13 @@ export function Map({
                         selectedMarkerCoords.longitude === restaurant.longitude
                           ? styles.selectedMarkerContainer
                           : null,
-                        {
-                          transform: [
-                            {
-                              scale: markerAnimation.interpolate({
-                                inputRange: [0, 1],
-                                outputRange: [1, 1.5],
-                              }),
-                            },
-                          ],
-                        },
                       ]}
                     >
                       <Image
                         source={{ uri: restaurant.image }}
                         style={styles.markerImage}
                       />
-                    </Animated.View>
+                    </View>
                   </Pressable>
                 </Marker>
               ))}
@@ -396,45 +406,51 @@ export function Map({
           )}
 
           {/* Carousel with visible adjacent cards */}
-          <View className="" style={styles.carouselContainer}>
+          <View style={[styles.carouselContainer, { height: cardHeight }]}>
             <Carousel
-              style={{ width: "100%" }}
+              style={{ width: windowWidth }}
               ref={carouselRef}
               data={restaurants}
               renderItem={renderRestaurantCard}
               width={cardWidth}
-              height={220}
+              height={cardHeight}
               mode="parallax"
               modeConfig={{
                 parallaxScrollingScale: 0.9,
-                parallaxScrollingOffset: 50,
+                parallaxScrollingOffset: 40,
               }}
               loop
               defaultIndex={0}
               snapEnabled
               scrollAnimationDuration={1000}
-              // itemSnapToAlignment="center"
-              // inactiveSlideScale={0.9}
-              // inactiveSlideOpacity={0.7}
-              // sliderWidth={windowWidth}
-              // itemWidth={cardWidth}
-              // slideStyle={{ display: "flex", alignItems: "center" }}
+              panGestureHandlerProps={{
+                activeOffsetX: [-10, 10],
+              }}
+              windowSize={3}
+              overscrollEnabled={false}
+              defaultScrollOffsetValue={defaultScrollOffset}
+              pagingEnabled
               onSnapToItem={(index) => {
                 const restaurant = restaurants[index];
+                if (restaurant && restaurant.latitude && restaurant.longitude) {
+                  // Use requestAnimationFrame to ensure the animation starts as soon as possible
+                  requestAnimationFrame(() => {
+                    mapRef.current?.animateToRegion(
+                      {
+                        latitude: restaurant.latitude,
+                        longitude: restaurant.longitude,
+                        latitudeDelta: 0.005,
+                        longitudeDelta: 0.005,
+                      },
+                      1000
+                    );
+                  });
+                }
                 setSelectedRestaurant(restaurant);
                 setSelectedMarkerCoords({
                   latitude: restaurant.latitude,
                   longitude: restaurant.longitude,
                 });
-                mapRef.current?.animateToRegion(
-                  {
-                    latitude: restaurant.latitude,
-                    longitude: restaurant.longitude,
-                    latitudeDelta: 0.01,
-                    longitudeDelta: 0.01,
-                  },
-                  1000
-                );
               }}
             />
           </View>
@@ -484,16 +500,8 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   selectedMarkerContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    overflow: "hidden",
-    borderWidth: 3,
     borderColor: "red", // Changed from "#007AFF" to "red"
-  },
-  selectedMarkerImage: {
-    width: "100%",
-    height: "100%",
+    borderWidth: 3,
   },
   loadingOverlay: {
     position: "absolute",
@@ -507,13 +515,10 @@ const styles = StyleSheet.create({
   },
   carouselContainer: {
     position: "absolute",
-    bottom: 0,
+    bottom: 20,
     left: 0,
     right: 0,
-    // backgroundColor: "red",
-    paddingBottom: 0,
-    marginBottom: 0,
-    // height: 250,
+    // height is now set dynamically
   },
   carousel: {
     flex: 1,
@@ -523,42 +528,5 @@ const styles = StyleSheet.create({
     height: 220,
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: 10, // Add horizontal margin
-  },
-  card: {
-    width: "100%",
-    height: "100%",
-    backgroundColor: "white",
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    overflow: "hidden",
-  },
-  cardImage: {
-    width: "100%",
-    height: 120,
-  },
-  cardContent: {
-    padding: 10,
-  },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 5,
-  },
-  cardDistance: {
-    fontSize: 12,
-    color: "#999",
   },
 });

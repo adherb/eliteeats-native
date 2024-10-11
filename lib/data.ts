@@ -123,4 +123,40 @@ const useTags = (): UseQueryResult<string[], Error> => {
   });
 };
 
-export { useRestaurants, useCuisines, useTags };
+const useRestaurant = (id: string): UseQueryResult<Restaurant, Error> => {
+  return useQuery({
+    queryKey: ["restaurant", id],
+    queryFn: async () => {
+      const url = `${API_BASE_URL}/restaurants/${id}`;
+
+      try {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(
+            `API error: ${response.status} ${response.statusText}${
+              errorData ? ` - ${JSON.stringify(errorData)}` : ""
+            }`
+          );
+        }
+
+        const data = await response.json();
+
+        if (typeof data !== "object" || data === null) {
+          throw new Error(
+            `Invalid data format: expected an object, got ${typeof data}`
+          );
+        }
+
+        return data as Restaurant;
+      } catch (error) {
+        console.error("Error fetching restaurant:", error);
+        throw error;
+      }
+    },
+    enabled: !!id, // Only run the query when we have an id
+  });
+};
+
+export { useRestaurants, useCuisines, useTags, useRestaurant };
