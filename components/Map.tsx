@@ -219,7 +219,7 @@ export function Map({
 
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const cardWidth = windowWidth * 0.75; // 75% of screen width
-  const cardHeight = 220; // We'll make this dynamic
+  const cardHeight = 240; // We'll make this dynamic
 
   // Create a shared value for the default scroll offset
   const defaultScrollOffset = useSharedValue(cardWidth * 0.125);
@@ -333,7 +333,7 @@ export function Map({
           showsCompass={false}
         />
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#ff0000" />
+          <ActivityIndicator size="large" color="grey" />
         </View>
       </View>
     );
