@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useEffect } from "react";
 import MapView, {
   Marker,
@@ -11,7 +11,6 @@ import {
   StyleSheet,
   Platform,
   Dimensions,
-  Animated,
   ActivityIndicator,
   Pressable,
 } from "react-native";
@@ -64,7 +63,6 @@ export function Map({
   distance,
 }: MapProps) {
   const mapRef = useRef<MapView | null>(null);
-  const markerRefs = useRef([]);
   const {
     data: allRestaurants,
     isLoading,
@@ -76,38 +74,18 @@ export function Map({
   });
 
   // Filter restaurants based on cuisine, distance, and tags
-  const restaurants = useMemo(() => {
-    if (!allRestaurants) return [];
-    return allRestaurants.filter((restaurant) => {
-      const isWithinDistance = restaurant.distance <= distance;
-      const hasSelectedCuisine = selectedCuisine
-        ? restaurant.cuisine.includes(selectedCuisine)
-        : true;
-      const hasAllTags = selectedTags.every((tag) =>
-        restaurant.tags.includes(tag)
-      );
-      return isWithinDistance && hasSelectedCuisine && hasAllTags;
-    });
-  }, [allRestaurants, distance, selectedCuisine, selectedTags]);
-
-  // Add this useEffect to log errors
-  useEffect(() => {
-    if (error) {
-      console.error("Error in useRestaurants:", error);
-    }
-  }, [error]);
-
-  // Update the log to show both allRestaurants and filtered restaurants
-  console.log("All restaurants data:", allRestaurants);
-  console.log("Filtered restaurants:", restaurants);
-  console.log("Search params:", {
-    lat: searchCenter.latitude,
-    lon: searchCenter.longitude,
-    radius: 50000, // Fixed 50 km radius
-    appliedCuisine: selectedCuisine,
-    appliedDistance: distance,
-    appliedTags: selectedTags,
-  });
+  const restaurants = allRestaurants
+    ? allRestaurants.filter((restaurant) => {
+        const isWithinDistance = restaurant.distance <= distance;
+        const hasSelectedCuisine = selectedCuisine
+          ? restaurant.cuisine.includes(selectedCuisine)
+          : true;
+        const hasAllTags = selectedTags.every((tag) =>
+          restaurant.tags.includes(tag)
+        );
+        return isWithinDistance && hasSelectedCuisine && hasAllTags;
+      })
+    : [];
 
   useEffect(() => {
     if (mapRef.current && searchCenter) {
@@ -183,39 +161,35 @@ export function Map({
     }
   }, [searchCenter, distance]);
 
-  const handleMarkerPress = useCallback(
-    (index) => {
-      // Trigger haptic feedback
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  const handleMarkerPress = (index) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      const restaurant = restaurants[index];
-      setSelectedRestaurant(restaurant);
-      setSelectedMarkerCoords({
-        latitude: restaurant.latitude,
-        longitude: restaurant.longitude,
-      });
+    const restaurant = restaurants[index];
+    setSelectedRestaurant(restaurant);
+    setSelectedMarkerCoords({
+      latitude: restaurant.latitude,
+      longitude: restaurant.longitude,
+    });
 
-      // Focus the carousel on the selected restaurant
-      setFocusedRestaurantIndex(index);
-      carouselRef.current?.scrollTo({ index: index, animated: true });
+    // Focus the carousel on the selected restaurant
+    setFocusedRestaurantIndex(index);
+    carouselRef.current?.scrollTo({ index: index, animated: true });
 
-      // Calculate new region to position marker based on current bottom sheet position
-      const { width, height } = Dimensions.get("window");
-      const ASPECT_RATIO = width / height;
-      const LATITUDE_DELTA = 0.02;
-      const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+    // Calculate new region to position marker based on current bottom sheet position
+    const { width, height } = Dimensions.get("window");
+    const ASPECT_RATIO = width / height;
+    const LATITUDE_DELTA = 0.02;
+    const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
-      const newRegion = {
-        latitude: restaurant.latitude,
-        longitude: restaurant.longitude,
-        // latitudeDelta: LATITUDE_DELTA,
-        // longitudeDelta: LONGITUDE_DELTA,
-      };
+    const newRegion = {
+      latitude: restaurant.latitude,
+      longitude: restaurant.longitude,
+      latitudeDelta: LATITUDE_DELTA,
+      longitudeDelta: LONGITUDE_DELTA,
+    };
 
-      mapRef.current?.animateToRegion(newRegion, 1000);
-    },
-    [restaurants, bottomSheetIndex]
-  );
+    mapRef.current?.animateToRegion(newRegion, 1000);
+  };
 
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const cardWidth = windowWidth * 0.75; // 75% of screen width
@@ -223,7 +197,6 @@ export function Map({
 
   // Create a shared value for the default scroll offset
   const defaultScrollOffset = useSharedValue(cardWidth * 0.125);
-
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(":");
     const hour = parseInt(hours, 10);
@@ -234,7 +207,11 @@ export function Map({
 
   const renderRestaurantCard = ({ item, index }) => (
     <Link href={`/restaurants/${item.id}`} asChild>
-      <Pressable>
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }}
+      >
         <View
           style={{ width: cardWidth, height: cardHeight }}
           className="justify-center items-center shadow-md"
