@@ -222,41 +222,30 @@ export function Map({
 
       // Focus the carousel on the selected restaurant
       setFocusedRestaurantIndex(index);
-      carouselRef.current?.scrollTo({ index: index, animated: true });
 
-      // Calculate new region to position marker based on current bottom sheet position
+      // Combine map and carousel animations
       const { width, height } = Dimensions.get("window");
       const ASPECT_RATIO = width / height;
       const LATITUDE_DELTA = 0.02;
       const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 
-      let offsetMultiplier;
-      switch (bottomSheetIndex) {
-        case 0: // 25%
-          offsetMultiplier = 0.025;
-          break;
-        case 1: // 50%
-          offsetMultiplier = 0.125;
-          break;
-        case 2: // 70%
-          offsetMultiplier = 0.325;
-          break;
-        default:
-          offsetMultiplier = 0.325; // Default to 70% if sheet is closed
-      }
-
       const newRegion = {
-        latitude: restaurant.latitude - LATITUDE_DELTA * offsetMultiplier,
+        latitude: restaurant.latitude - LATITUDE_DELTA * 0.1, // Slight offset to account for the bottom sheet
         longitude: restaurant.longitude,
         latitudeDelta: LATITUDE_DELTA,
         longitudeDelta: LONGITUDE_DELTA,
       };
 
-      mapRef.current?.animateToRegion(newRegion, 1000);
+      // Animate map and carousel simultaneously
+      mapRef.current?.animateToRegion(newRegion, 500);
+      carouselRef.current?.scrollTo({ index: index, animated: true });
 
-      animateMarker();
+      // Delay the marker animation slightly
+      setTimeout(() => {
+        animateMarker();
+      }, 100);
     },
-    [restaurants, bottomSheetIndex, animateMarker]
+    [restaurants, animateMarker]
   );
 
   const windowWidth = Dimensions.get("window").width;
