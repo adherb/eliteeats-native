@@ -110,9 +110,6 @@ const RestaurantPage = () => {
       {isLoading ? (
         <View className="flex-1 justify-center items-center bg-white">
           <ActivityIndicator size="large" color="gray" />
-          <Text className="mt-4 text-gray-600">
-            Loading restaurant details...
-          </Text>
         </View>
       ) : error ? (
         <View className="flex-1 justify-center items-center bg-white">
